@@ -42,3 +42,6 @@ next-env.d.ts
 
 # graphify knowledge graph (local, regenerated)
 /graphify-out/
+
+# Cursor agent rules (local)
+.cursor/rules/
