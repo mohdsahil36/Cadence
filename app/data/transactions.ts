@@ -2289,7 +2289,7 @@ export const transactions: Transaction[] = [
     amount: 1181.54,
     currency: "EUR",
     settlementAmount: 1344.24,
-    settlementCurrency: "INR",
+    settlementCurrency: "USD",
     exchangeRate: 1.1377,
     fee: 28.2,
     netAmount: 1153.34,
