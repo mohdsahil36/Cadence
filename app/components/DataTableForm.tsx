@@ -12,6 +12,7 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import useDataTableStore from "../store/dataTableStore";
+import { useEffect, useState } from "react";
 
 interface DataTableFormProps {
   uniqueReceivedCurrencies: string[];
@@ -60,7 +61,8 @@ export default function DataTableForm({
   uniquePaymentMethods,
   uniqueStatuses,
 }: DataTableFormProps) {
-  // current set of values of the filters
+  const [merchantName, setmerchantName] = useState("");
+
   const selectedReceivedCurrency = useDataTableStore(
     (state) => state.selectedRecievedCurrency,
   );
@@ -75,6 +77,10 @@ export default function DataTableForm({
   const selectedStatus = useDataTableStore((state) => state.selectedStatus);
 
   // setter functions for the filters selected
+  const setSelectedMerchantName = useDataTableStore(
+    (state) => state.setSelectedMerchantName,
+  );
+
   const setSelectedReceivedCurrency = useDataTableStore(
     (state) => state.setSelectedRecievedCurrency,
   );
@@ -91,6 +97,17 @@ export default function DataTableForm({
     (state) => state.setSelectedStatus,
   );
 
+  //debounce function for the API calls
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      setSelectedMerchantName(merchantName || null);
+
+      return timerId;
+    }, 1000);
+
+    return () => clearTimeout(timerId);
+  }, [merchantName, setSelectedMerchantName]);
+
   return (
     <div className="mb-4 grid w-full grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
       <Field className="min-w-0">
@@ -100,6 +117,10 @@ export default function DataTableForm({
           type="text"
           placeholder="Search merchant"
           className="w-full"
+          value={merchantName ?? ""}
+          onChange={(event) => {
+            setmerchantName(event.target.value);
+          }}
         />
       </Field>
 
@@ -138,6 +159,7 @@ export default function DataTableForm({
       <Button
         className="min-w-20 rounded-md px-5 xl:justify-self-stretch"
         onClick={() => {
+          setmerchantName("");
           setSelectedReceivedCurrency(null);
           setSelectedSettlementCurrency(null);
           setSelectedPaymentMethod(null);

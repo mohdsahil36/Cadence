@@ -31,10 +31,17 @@ export default function Dashboard() {
     (state) => state.selectedPaymentMethod,
   );
   const selectedStatus = useDataTableStore((state) => state.selectedStatus);
+  const selectedMerchantName = useDataTableStore(
+    (state) => state.selectedMerchantName,
+  );
 
   const filteredData = useMemo(
     () =>
       transactions.filter((item) => {
+        const merchantQuery = selectedMerchantName?.trim().toLowerCase() ?? "";
+        const matchesMerchant =
+          merchantQuery === "" ||
+          item.merchantName.toLowerCase().includes(merchantQuery);
         const matchesReceived =
           selectedReceivedCurrency == null ||
           item.currency === selectedReceivedCurrency;
@@ -47,6 +54,7 @@ export default function Dashboard() {
         const matchesStatus =
           selectedStatus == null || item.status == selectedStatus;
         return (
+          matchesMerchant &&
           matchesReceived &&
           matchesSettlement &&
           matchesStatus &&
@@ -54,6 +62,7 @@ export default function Dashboard() {
         );
       }),
     [
+      selectedMerchantName,
       selectedReceivedCurrency,
       selectedSettlementCurrency,
       selectedPaymentMethod,
