@@ -8,6 +8,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import type { Transaction } from "../data/transactions";
+import { ArrowUpRightIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const DataColumns = [
   "Merchant Name",
@@ -61,6 +63,11 @@ export default function DataTable({ rows }: { rows: Transaction[] }) {
                 >
                   {item.status}
                 </Badge>
+              </TableCell>
+              <TableCell>
+                <Button variant="outline" className="border-0">
+                  <ArrowUpRightIcon />
+                </Button>
               </TableCell>
             </TableRow>
           ))
