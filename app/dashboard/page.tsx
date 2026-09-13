@@ -24,6 +24,12 @@ const uniqueStatuses = [...new Set(transactions.map((item) => item.status))];
 export default function Dashboard() {
   const transactionId = useDataTableStore((state) => state.transactionId);
 
+  const setTransactionId = useDataTableStore((state) => state.setTransactionId);
+
+  const setTransactionModalState = useDataTableStore(
+    (state) => state.setTransactionModalState,
+  );
+
   const selectedReceivedCurrency = useDataTableStore(
     (state) => state.selectedRecievedCurrency,
   );
@@ -99,7 +105,13 @@ export default function Dashboard() {
 
         {transactionModalState && transactionDetails && (
           <aside className="h-[80vh] w-[320px] shrink-0">
-            <DataDialog transaction={transactionDetails} />
+            <DataDialog
+              transaction={transactionDetails}
+              onClose={() => {
+                setTransactionId(null);
+                setTransactionModalState(false);
+              }}
+            />
           </aside>
         )}
       </div>

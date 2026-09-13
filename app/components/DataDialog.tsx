@@ -52,8 +52,8 @@ export default function DataDialog({
 
   if (!transaction) {
     return (
-      <aside className="flex h-full w-[440px] shrink-0 items-center justify-center rounded-xl border border-border bg-background shadow-sm">
-        <div className="max-w-[260px] px-6 text-center">
+      <aside className="flex h-full w-110 shrink-0 items-center justify-center rounded-xl border border-border bg-background shadow-sm">
+        <div className="max-w-65 px-6 text-center">
           <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-full border border-border bg-muted/40">
             <span className="text-sm text-muted-foreground">↗</span>
           </div>
@@ -93,7 +93,7 @@ export default function DataDialog({
   };
 
   return (
-    <aside className="relative flex h-full w-[440px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-background shadow-sm">
+    <aside className="relative flex h-full w-110 shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-background shadow-sm">
       <div className="shrink-0 border-b border-border bg-background px-6 py-5">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
@@ -101,7 +101,7 @@ export default function DataDialog({
               Transaction details
             </p>
 
-            <h2 className="mt-1 truncate font-serif text-[29px] leading-tight tracking-[-0.025em]">
+            <h2 className="mt-1 truncate font-serif text-[29px] leading-tight tracking-tight">
               {transaction.id}
             </h2>
           </div>
@@ -260,7 +260,7 @@ export default function DataDialog({
 
                   <div className="mt-3 grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-red-600/70 dark:text-red-400/70">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-red-600/70 dark:text-red-400/70">
                         Code
                       </p>
 
@@ -270,7 +270,7 @@ export default function DataDialog({
                     </div>
 
                     <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-red-600/70 dark:text-red-400/70">
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-red-600/70 dark:text-red-400/70">
                         Retryable
                       </p>
 
@@ -289,7 +289,7 @@ export default function DataDialog({
       </div>
 
       {hasMore && !isAtBottom && (
-        <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex h-20 items-end justify-center bg-gradient-to-t from-background via-background/90 to-transparent pb-4">
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex h-20 items-end justify-center bg-linear-to-t from-background via-background/90 to-transparent pb-4">
           <div className="flex items-center gap-2 rounded-full border border-border bg-background/95 px-3 py-1.5 text-[10px] font-medium text-muted-foreground shadow-sm backdrop-blur">
             <ChevronDown className="size-3" />
             Scroll for more
@@ -355,11 +355,11 @@ function Field({
         topBorder ? "border-t border-border" : "",
       ].join(" ")}
     >
-      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
         {label}
       </p>
 
-      <p className="mt-1.5 break-words text-sm font-medium leading-5 text-foreground">
+      <p className="mt-1.5 wrap-break-word text-sm font-medium leading-5 text-foreground">
         {value}
       </p>
     </div>
@@ -377,7 +377,7 @@ function InfoCard({
 }) {
   return (
     <div className="rounded-xl border border-border bg-muted/20 px-4 py-3.5 transition-colors hover:bg-muted/40">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
         {label}
       </p>
 
