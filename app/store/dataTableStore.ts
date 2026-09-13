@@ -7,11 +7,21 @@ interface DataTableStore {
   selectedPaymentMethod: string | null;
   selectedStatus: string | null;
 
+  transactionId: string | null;
+  transactionModalState: boolean;
+
   setSelectedMerchantName: (name: string | null) => void;
   setSelectedSettlementCurrency: (currency: string | null) => void;
   setSelectedRecievedCurrency: (currency: string | null) => void;
   setSelectedPaymentMethod: (method: string | null) => void;
   setSelectedStatus: (status: string | null) => void;
+
+  setTransactionId: (id: string | null) => void;
+  setTransactionModalState: (
+    state: boolean | ((prev: boolean) => boolean),
+  ) => void;
+
+  resetSelectedValues: () => void;
 }
 
 const useDataTableStore = create<DataTableStore>()((set) => ({
@@ -21,8 +31,10 @@ const useDataTableStore = create<DataTableStore>()((set) => ({
   selectedPaymentMethod: null,
   selectedStatus: null,
 
-  setSelectedMerchantName: (name: string | null) =>
-    set({ selectedMerchantName: name }),
+  transactionId: null,
+  transactionModalState: false,
+
+  setSelectedMerchantName: (name) => set({ selectedMerchantName: name }),
 
   setSelectedSettlementCurrency: (currency) =>
     set({ selectedSettlementCurrency: currency }),
@@ -33,6 +45,25 @@ const useDataTableStore = create<DataTableStore>()((set) => ({
   setSelectedPaymentMethod: (method) => set({ selectedPaymentMethod: method }),
 
   setSelectedStatus: (status) => set({ selectedStatus: status }),
+
+  setTransactionId: (id) => set({ transactionId: id }),
+
+  setTransactionModalState: (state) =>
+    set((store) => ({
+      transactionModalState:
+        typeof state === "function"
+          ? state(store.transactionModalState)
+          : state,
+    })),
+
+  resetSelectedValues: () =>
+    set({
+      selectedMerchantName: null,
+      selectedSettlementCurrency: null,
+      selectedRecievedCurrency: null,
+      selectedPaymentMethod: null,
+      selectedStatus: null,
+    }),
 }));
 
 export default useDataTableStore;

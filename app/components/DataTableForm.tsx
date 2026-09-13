@@ -97,6 +97,10 @@ export default function DataTableForm({
     (state) => state.setSelectedStatus,
   );
 
+  const resetSelectedValues = useDataTableStore(
+    (state) => state.resetSelectedValues,
+  );
+
   //debounce function for the API calls
   useEffect(() => {
     const timerId = setTimeout(() => {
@@ -159,11 +163,7 @@ export default function DataTableForm({
       <Button
         className="min-w-20 rounded-md px-5 xl:justify-self-stretch"
         onClick={() => {
-          setmerchantName("");
-          setSelectedReceivedCurrency(null);
-          setSelectedSettlementCurrency(null);
-          setSelectedPaymentMethod(null);
-          setSelectedStatus(null);
+          resetSelectedValues();
         }}
       >
         Reset
