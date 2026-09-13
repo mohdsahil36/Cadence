@@ -31,6 +31,7 @@ const statusStyles = {
 };
 
 export default function DataTable({ rows }: { rows: Transaction[] }) {
+  const transactionId = useDataTableStore((state) => state.transactionId);
   const setTransactionId = useDataTableStore((state) => state.setTransactionId);
   const setTransactionModalState = useDataTableStore(
     (state) => state.setTransactionModalState,
@@ -74,8 +75,13 @@ export default function DataTable({ rows }: { rows: Transaction[] }) {
                   variant="outline"
                   className="border-0"
                   onClick={() => {
-                    setTransactionId(item.id);
-                    setTransactionModalState((prev) => !prev);
+                    if (transactionId === item.id) {
+                      setTransactionId(null);
+                      setTransactionModalState(false);
+                    } else {
+                      setTransactionId(item.id);
+                      setTransactionModalState(true);
+                    }
                   }}
                 >
                   <ArrowUpRightIcon />
