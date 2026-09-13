@@ -8,6 +8,9 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import type { Transaction } from "../data/transactions";
+import { ArrowUpRightIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import useDataTableStore from "../store/dataTableStore";
 
 const DataColumns = [
   "Merchant Name",
@@ -28,6 +31,11 @@ const statusStyles = {
 };
 
 export default function DataTable({ rows }: { rows: Transaction[] }) {
+  const transactionId = useDataTableStore((state) => state.transactionId);
+  const setTransactionId = useDataTableStore((state) => state.setTransactionId);
+  const setTransactionModalState = useDataTableStore(
+    (state) => state.setTransactionModalState,
+  );
   return (
     <Table containerClassName="min-h-0 flex-1 overflow-auto">
       <TableHeader>
@@ -61,6 +69,23 @@ export default function DataTable({ rows }: { rows: Transaction[] }) {
                 >
                   {item.status}
                 </Badge>
+              </TableCell>
+              <TableCell>
+                <Button
+                  variant="outline"
+                  className="border-0"
+                  onClick={() => {
+                    if (transactionId === item.id) {
+                      setTransactionId(null);
+                      setTransactionModalState(false);
+                    } else {
+                      setTransactionId(item.id);
+                      setTransactionModalState(true);
+                    }
+                  }}
+                >
+                  <ArrowUpRightIcon />
+                </Button>
               </TableCell>
             </TableRow>
           ))
