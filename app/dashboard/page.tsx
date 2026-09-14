@@ -1,11 +1,15 @@
 "use client";
 
 import { useMemo } from "react";
+
 import { transactions } from "../data/transactions";
+
 import useDataTableStore from "../store/dataTableStore";
+
 import DataTableForm from "../components/DataTableForm";
 import DataTable from "../components/DataTable";
 import DataDialog from "../components/DataDialog";
+import CurrentStreakCard from "../activity/CurrentStreakCard";
 
 const uniqueReceivedCurrencies = [
   ...new Set(transactions.map((item) => item.currency)),
@@ -33,16 +37,21 @@ export default function Dashboard() {
   const selectedReceivedCurrency = useDataTableStore(
     (state) => state.selectedRecievedCurrency,
   );
+
   const selectedSettlementCurrency = useDataTableStore(
     (state) => state.selectedSettlementCurrency,
   );
+
   const selectedPaymentMethod = useDataTableStore(
     (state) => state.selectedPaymentMethod,
   );
+
   const selectedStatus = useDataTableStore((state) => state.selectedStatus);
+
   const selectedMerchantName = useDataTableStore(
     (state) => state.selectedMerchantName,
   );
+
   const transactionModalState = useDataTableStore(
     (state) => state.transactionModalState,
   );
@@ -51,20 +60,26 @@ export default function Dashboard() {
     () =>
       transactions.filter((item) => {
         const merchantQuery = selectedMerchantName?.trim().toLowerCase() ?? "";
+
         const matchesMerchant =
           merchantQuery === "" ||
           item.merchantName.toLowerCase().includes(merchantQuery);
+
         const matchesReceived =
           selectedReceivedCurrency == null ||
           item.currency === selectedReceivedCurrency;
+
         const matchesSettlement =
           selectedSettlementCurrency == null ||
           item.settlementCurrency === selectedSettlementCurrency;
+
         const matchesPayment =
           selectedPaymentMethod === null ||
-          item.paymentMethod == selectedPaymentMethod;
+          item.paymentMethod === selectedPaymentMethod;
+
         const matchesStatus =
           selectedStatus == null || item.status == selectedStatus;
+
         return (
           matchesMerchant &&
           matchesReceived &&
@@ -88,8 +103,12 @@ export default function Dashboard() {
   );
 
   return (
-    <main className="flex min-h-svh w-full items-center justify-center p-2">
-      <div className="flex w-full max-w-7xl items-center gap-5">
+    <main className="flex min-h-svh w-full flex-col p-2">
+      <div className="mx-auto flex w-full max-w-7xl items-center justify-end px-1 pb-3">
+        <CurrentStreakCard />
+      </div>
+
+      <div className="mx-auto flex w-full max-w-7xl items-center gap-5">
         <div className="flex h-[80vh] min-w-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card p-5 shadow-sm">
           <DataTableForm
             uniqueReceivedCurrencies={uniqueReceivedCurrencies}

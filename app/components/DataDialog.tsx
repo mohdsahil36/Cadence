@@ -112,7 +112,7 @@ export default function DataDialog({
             className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground"
             aria-label="Close"
           >
-            <X className="size-4" />
+            <X className="size-4 cursor-pointer" />
           </button>
         </div>
 
