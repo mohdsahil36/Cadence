@@ -49,7 +49,19 @@ export default function DataTable({ rows }: { rows: Transaction[] }) {
       <TableBody>
         {rows.length > 0 ? (
           rows.map((item) => (
-            <TableRow key={item.id}>
+            <TableRow
+              key={item.id}
+              className="cursor-pointer"
+              onClick={() => {
+                if (transactionId === item.id) {
+                  setTransactionId(null);
+                  setTransactionModalState(false);
+                } else {
+                  setTransactionId(item.id);
+                  setTransactionModalState(true);
+                }
+              }}
+            >
               <TableCell>{item.merchantName}</TableCell>
               <TableCell>{item.merchantCountry}</TableCell>
               <TableCell className="font-mono tabular-nums">
@@ -71,19 +83,7 @@ export default function DataTable({ rows }: { rows: Transaction[] }) {
                 </Badge>
               </TableCell>
               <TableCell>
-                <Button
-                  variant="outline"
-                  className="border-0"
-                  onClick={() => {
-                    if (transactionId === item.id) {
-                      setTransactionId(null);
-                      setTransactionModalState(false);
-                    } else {
-                      setTransactionId(item.id);
-                      setTransactionModalState(true);
-                    }
-                  }}
-                >
+                <Button variant="outline" className="border-0">
                   <ArrowUpRightIcon />
                 </Button>
               </TableCell>
