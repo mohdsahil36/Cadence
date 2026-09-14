@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+
 import { ChevronDown, X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +33,7 @@ export default function DataDialog({
 
     const updateScrollState = () => {
       const hasOverflow = element.scrollHeight > element.clientHeight + 2;
+
       const atBottom =
         element.scrollTop + element.clientHeight >= element.scrollHeight - 4;
 
@@ -52,15 +54,17 @@ export default function DataDialog({
 
   if (!transaction) {
     return (
-      <aside className="flex h-full w-110 shrink-0 items-center justify-center rounded-xl border border-border bg-background shadow-sm">
-        <div className="max-w-65 px-6 text-center">
-          <div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-full border border-border bg-muted/40">
+      <aside className="flex h-full w-full shrink-0 items-center justify-center rounded-xl border border-border bg-card">
+        <div className="max-w-64 px-6 text-center">
+          <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-muted/30">
             <span className="text-sm text-muted-foreground">↗</span>
           </div>
 
-          <p className="text-sm font-medium">No transaction selected</p>
+          <p className="text-sm font-semibold tracking-tight">
+            No transaction selected
+          </p>
 
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+          <p className="mt-1.5 text-xs leading-5 text-muted-foreground">
             Select a transaction from the table to view its details.
           </p>
         </div>
@@ -72,11 +76,11 @@ export default function DataDialog({
 
   const statusStyles = {
     successful:
-      "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-400",
+      "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/70 dark:bg-emerald-950/40 dark:text-emerald-400",
     failed:
-      "border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400",
+      "border-red-200 bg-red-50 text-red-700 dark:border-red-900/70 dark:bg-red-950/40 dark:text-red-400",
     pending:
-      "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-400",
+      "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-400",
   };
 
   const statusDot = {
@@ -93,15 +97,15 @@ export default function DataDialog({
   };
 
   return (
-    <aside className="relative flex h-full w-110 shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-background shadow-sm">
-      <div className="shrink-0 border-b border-border bg-background px-6 py-5">
+    <aside className="relative flex h-full w-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card">
+      <div className="shrink-0 border-b border-border px-5 py-4">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
               Transaction details
             </p>
 
-            <h2 className="mt-1 truncate font-serif text-[29px] leading-tight tracking-tight">
+            <h2 className="mt-1 truncate text-xl font-semibold tracking-tight">
               {transaction.id}
             </h2>
           </div>
@@ -109,27 +113,28 @@ export default function DataDialog({
           <button
             type="button"
             onClick={onClose}
-            className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground"
             aria-label="Close"
           >
-            <X className="size-4 cursor-pointer" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="mt-4 flex items-center gap-2">
+        <div className="mt-3 flex min-w-0 items-center gap-2">
           <Badge
             variant="outline"
-            className={`rounded-full px-2.5 py-1 text-[11px] font-medium capitalize ${
+            className={`rounded-full px-2.5 py-1 text-[10px] font-medium capitalize ${
               statusStyles[status as keyof typeof statusStyles] ??
               "border-border bg-muted text-muted-foreground"
             }`}
           >
             <span
-              className={`mr-1.5 size-1.5 rounded-full ${
+              className={`mr-1.5 h-1.5 w-1.5 rounded-full ${
                 statusDot[status as keyof typeof statusDot] ??
                 "bg-muted-foreground"
               }`}
             />
+
             {transaction.status}
           </Badge>
 
@@ -139,31 +144,35 @@ export default function DataDialog({
         </div>
       </div>
 
-      <div className="shrink-0 border-b border-border bg-muted/30 px-6 py-5">
-        <div className="rounded-xl border border-border bg-background px-5 py-4 shadow-sm">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-muted-foreground">
-            Net settlement
-          </p>
+      <div className="shrink-0 border-b border-border bg-muted/20 px-5 py-4">
+        <div className="rounded-xl border border-border bg-background px-5 py-4">
+          <div className="flex items-end justify-between gap-5">
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-muted-foreground">
+                Net settlement
+              </p>
 
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-serif text-[38px] leading-none tracking-[-0.03em]">
-              {transaction.netAmount.toFixed(2)}
-            </span>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-3xl font-semibold tracking-tight">
+                  {transaction.netAmount.toFixed(2)}
+                </span>
 
-            <span className="text-sm font-semibold text-muted-foreground">
-              {transaction.settlementCurrency}
-            </span>
-          </div>
+                <span className="text-sm font-semibold text-muted-foreground">
+                  {transaction.settlementCurrency}
+                </span>
+              </div>
+            </div>
 
-          <div className="mt-3 h-px bg-border" />
+            <div className="shrink-0 text-right">
+              <p className="text-[10px] text-muted-foreground">
+                Settlement amount
+              </p>
 
-          <div className="mt-3 flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Settlement amount</span>
-
-            <span className="font-medium">
-              {transaction.netAmount.toFixed(2)}{" "}
-              {transaction.settlementCurrency}
-            </span>
+              <p className="mt-1 text-xs font-semibold">
+                {transaction.netAmount.toFixed(2)}{" "}
+                {transaction.settlementCurrency}
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -177,43 +186,56 @@ export default function DataDialog({
           open={openSections.details}
           onToggle={() => toggleSection("details")}
         >
-          <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-border bg-background">
-            <Field
-              label="Charged amount"
-              value={`${transaction.amount.toFixed(2)} ${transaction.currency}`}
-            />
+          <div className="overflow-hidden rounded-xl border border-border bg-background">
+            <div className="grid grid-cols-2">
+              <Field
+                label="Charged amount"
+                value={`${transaction.amount.toFixed(2)} ${transaction.currency}`}
+              />
 
-            <Field
-              label="Exchange rate"
-              value={transaction.exchangeRate.toString()}
-              leftBorder
-            />
+              <Field
+                label="Exchange rate"
+                value={transaction.exchangeRate.toString()}
+                leftBorder
+              />
 
-            <Field
-              label="Fee"
-              value={`${transaction.fee.toFixed(2)} ${transaction.currency}`}
-              topBorder
-            />
+              <Field
+                label="Fee"
+                value={`${transaction.fee.toFixed(2)} ${transaction.currency}`}
+                topBorder
+              />
 
-            <Field
-              label="Payment method"
-              value={formatValue(transaction.paymentMethod)}
-              leftBorder
-              topBorder
-            />
+              <Field
+                label="Payment method"
+                value={formatValue(transaction.paymentMethod)}
+                leftBorder
+                topBorder
+              />
+            </div>
 
-            <Field
-              label="Card brand"
-              value={transaction.cardBrand ?? "—"}
-              topBorder
-            />
+            <div className="border-t border-border px-4 py-3">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    Created
+                  </p>
 
-            <Field
-              label="Date"
-              value={new Date(transaction.createdAt).toLocaleString()}
-              leftBorder
-              topBorder
-            />
+                  <p className="mt-1 text-xs font-medium">
+                    {new Date(transaction.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+
+                <div className="text-right">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    Time
+                  </p>
+
+                  <p className="mt-1 text-xs font-medium">
+                    {new Date(transaction.createdAt).toLocaleTimeString()}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </Section>
 
@@ -222,21 +244,22 @@ export default function DataDialog({
           open={openSections.parties}
           onToggle={() => toggleSection("parties")}
         >
-          <div className="grid grid-cols-2 gap-3">
-            <InfoCard label="Merchant" value={transaction.merchantName} />
+          <div className="overflow-hidden rounded-xl border border-border bg-background">
+            <PartyRow label="Merchant" value={transaction.merchantName} />
 
-            <InfoCard
+            <PartyRow
               label="Merchant country"
               value={transaction.merchantCountry}
               valueClassName="uppercase"
             />
 
-            <InfoCard label="Customer" value={transaction.customer.name} />
+            <PartyRow label="Customer" value={transaction.customer.name} />
 
-            <InfoCard
+            <PartyRow
               label="Customer country"
               value={transaction.customer.country}
               valueClassName="uppercase"
+              isLast
             />
           </div>
         </Section>
@@ -247,18 +270,18 @@ export default function DataDialog({
             open={openSections.failure}
             onToggle={() => toggleSection("failure")}
           >
-            <div className="rounded-xl border border-red-200 bg-red-50/70 p-4 dark:border-red-900 dark:bg-red-950/20">
+            <div className="rounded-xl border border-red-200 bg-red-50/70 p-4 dark:border-red-900/60 dark:bg-red-950/20">
               <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-400">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-100 text-xs font-semibold text-red-600 dark:bg-red-950 dark:text-red-400">
                   !
                 </div>
 
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-red-900 dark:text-red-300">
                     {transaction.failure.reason}
                   </p>
 
-                  <div className="mt-3 grid grid-cols-2 gap-4">
+                  <div className="mt-4 grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-widest text-red-600/70 dark:text-red-400/70">
                         Code
@@ -291,7 +314,7 @@ export default function DataDialog({
       {hasMore && !isAtBottom && (
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex h-20 items-end justify-center bg-linear-to-t from-background via-background/90 to-transparent pb-4">
           <div className="flex items-center gap-2 rounded-full border border-border bg-background/95 px-3 py-1.5 text-[10px] font-medium text-muted-foreground shadow-sm backdrop-blur">
-            <ChevronDown className="size-3" />
+            <ChevronDown className="h-3 w-3" />
             Scroll for more
           </div>
         </div>
@@ -316,22 +339,22 @@ function Section({
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full items-center justify-between px-6 py-4 text-left transition-colors hover:bg-muted/30"
+        className="flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-muted/30"
       >
         <div className="flex items-center gap-2.5">
-          <span className="size-1.5 rounded-full bg-foreground/50" />
+          <span className="h-1.5 w-1.5 rounded-full bg-foreground/50" />
 
-          <h3 className="text-sm font-semibold">{title}</h3>
+          <h3 className="text-sm font-semibold tracking-tight">{title}</h3>
         </div>
 
         <ChevronDown
-          className={`size-4 text-muted-foreground transition-transform ${
+          className={`h-4 w-4 text-muted-foreground transition-transform ${
             open ? "rotate-180" : ""
           }`}
         />
       </button>
 
-      {open && <div className="px-6 pb-6">{children}</div>}
+      {open && <div className="px-5 pb-5">{children}</div>}
     </section>
   );
 }
@@ -359,30 +382,36 @@ function Field({
         {label}
       </p>
 
-      <p className="mt-1.5 wrap-break-word text-sm font-medium leading-5 text-foreground">
+      <p className="mt-1.5 wrap-break-word text-xs font-medium leading-5 text-foreground">
         {value}
       </p>
     </div>
   );
 }
 
-function InfoCard({
+function PartyRow({
   label,
   value,
   valueClassName = "",
+  isLast = false,
 }: {
   label: string;
   value: string;
   valueClassName?: string;
+  isLast?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-muted/20 px-4 py-3.5 transition-colors hover:bg-muted/40">
-      <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+    <div
+      className={`flex items-center justify-between gap-4 px-4 py-3.5 ${
+        !isLast ? "border-b border-border" : ""
+      }`}
+    >
+      <p className="shrink-0 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
         {label}
       </p>
 
       <p
-        className={`mt-1.5 truncate text-sm font-medium text-foreground ${valueClassName}`}
+        className={`min-w-0 truncate text-right text-xs font-semibold text-foreground ${valueClassName}`}
       >
         {value}
       </p>
@@ -392,6 +421,6 @@ function InfoCard({
 
 function formatValue(value: string) {
   return value
-    .replace(/_/g, " ")
+    .replace(/\_/g, " ")
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import {
   Select,
   SelectContent,
@@ -8,11 +10,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+
 import useDataTableStore from "../store/dataTableStore";
-import { useEffect, useState } from "react";
 
 interface DataTableFormProps {
   uniqueReceivedCurrencies: string[];
@@ -35,12 +38,16 @@ function FilterSelect({
   onValueChange?: (value: string | null) => void;
 }) {
   return (
-    <Field className="min-w-0">
-      <FieldLabel>{label}</FieldLabel>
-      <Select value={value} onValueChange={onValueChange}>
-        <SelectTrigger className="w-full">
+    <Field className="min-w-0 gap-1">
+      <FieldLabel className="text-[11px] text-muted-foreground">
+        {label}
+      </FieldLabel>
+
+      <Select value={value ?? undefined} onValueChange={onValueChange}>
+        <SelectTrigger className="h-8 w-full text-xs">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
+
         <SelectContent>
           <SelectGroup>
             {options.map((option) => (
@@ -61,11 +68,12 @@ export default function DataTableForm({
   uniquePaymentMethods,
   uniqueStatuses,
 }: DataTableFormProps) {
-  const [merchantName, setmerchantName] = useState("");
+  const [merchantName, setMerchantName] = useState("");
 
   const selectedReceivedCurrency = useDataTableStore(
     (state) => state.selectedRecievedCurrency,
   );
+
   const selectedSettlementCurrency = useDataTableStore(
     (state) => state.selectedSettlementCurrency,
   );
@@ -76,7 +84,6 @@ export default function DataTableForm({
 
   const selectedStatus = useDataTableStore((state) => state.selectedStatus);
 
-  // setter functions for the filters selected
   const setSelectedMerchantName = useDataTableStore(
     (state) => state.setSelectedMerchantName,
   );
@@ -101,35 +108,38 @@ export default function DataTableForm({
     (state) => state.resetSelectedValues,
   );
 
-  //debounce function for the API calls
   useEffect(() => {
     const timerId = setTimeout(() => {
       setSelectedMerchantName(merchantName || null);
-
-      return timerId;
-    }, 1000);
+    }, 500);
 
     return () => clearTimeout(timerId);
   }, [merchantName, setSelectedMerchantName]);
 
   return (
-    <div className="mb-4 grid w-full grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-      <Field className="min-w-0">
-        <FieldLabel htmlFor="merchant-name">Merchant Name</FieldLabel>
+    <div className="grid w-full grid-cols-1 items-end gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <Field className="min-w-0 gap-1">
+        <FieldLabel
+          htmlFor="merchant-name"
+          className="text-[11px] text-muted-foreground"
+        >
+          Merchant
+        </FieldLabel>
+
         <Input
           id="merchant-name"
           type="text"
           placeholder="Search merchant"
-          className="w-full"
-          value={merchantName ?? ""}
+          className="h-8 w-full text-xs"
+          value={merchantName}
           onChange={(event) => {
-            setmerchantName(event.target.value);
+            setMerchantName(event.target.value);
           }}
         />
       </Field>
 
       <FilterSelect
-        label="Settlement Currency"
+        label="Settlement"
         placeholder="All"
         options={uniqueSettlementCurrencies}
         value={selectedSettlementCurrency}
@@ -137,7 +147,7 @@ export default function DataTableForm({
       />
 
       <FilterSelect
-        label="Received Currency"
+        label="Received"
         placeholder="All"
         options={uniqueReceivedCurrencies}
         value={selectedReceivedCurrency}
@@ -145,7 +155,7 @@ export default function DataTableForm({
       />
 
       <FilterSelect
-        label="Payment Method"
+        label="Payment method"
         placeholder="All"
         options={uniquePaymentMethods}
         value={selectedPaymentMethod}
@@ -161,8 +171,10 @@ export default function DataTableForm({
       />
 
       <Button
-        className="min-w-20 rounded-md px-5 xl:justify-self-stretch"
+        variant="outline"
+        className="h-8 rounded-md px-4 text-xs"
         onClick={() => {
+          setMerchantName("");
           resetSelectedValues();
         }}
       >

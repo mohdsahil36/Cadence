@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 
 import { transactions } from "../data/transactions";
-
 import useDataTableStore from "../store/dataTableStore";
 
 import DataTableForm from "../components/DataTableForm";
@@ -27,9 +26,7 @@ const uniqueStatuses = [...new Set(transactions.map((item) => item.status))];
 
 export default function Dashboard() {
   const transactionId = useDataTableStore((state) => state.transactionId);
-
   const setTransactionId = useDataTableStore((state) => state.setTransactionId);
-
   const setTransactionModalState = useDataTableStore(
     (state) => state.setTransactionModalState,
   );
@@ -78,7 +75,7 @@ export default function Dashboard() {
           item.paymentMethod === selectedPaymentMethod;
 
         const matchesStatus =
-          selectedStatus == null || item.status == selectedStatus;
+          selectedStatus == null || item.status === selectedStatus;
 
         return (
           matchesMerchant &&
@@ -103,19 +100,34 @@ export default function Dashboard() {
   );
 
   return (
-    <main className="flex min-h-svh w-full flex-col p-2">
+    <main className="flex min-h-svh w-full flex-col px-3 py-3">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-end px-1 pb-3">
         <CurrentStreakCard />
       </div>
 
-      <div className="mx-auto flex w-full max-w-7xl items-center gap-5">
-        <div className="flex h-[80vh] min-w-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card p-5 shadow-sm">
-          <DataTableForm
-            uniqueReceivedCurrencies={uniqueReceivedCurrencies}
-            uniqueSettlementCurrencies={uniqueSettlementCurrencies}
-            uniquePaymentMethods={uniquePaymentMethods}
-            uniqueStatuses={uniqueStatuses}
-          />
+      <div className="mx-auto flex w-full max-w-7xl items-center gap-4">
+        <div className="flex h-[82vh] min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card">
+          <div className="border-b border-border px-4 py-3">
+            <div className="mb-3 flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-semibold">Transaction list</h2>
+                <p className="text-[11px] text-muted-foreground">
+                  Filter transactions by merchant, currency, method or status
+                </p>
+              </div>
+
+              <span className="text-[11px] text-muted-foreground">
+                {filteredData.length} results
+              </span>
+            </div>
+
+            <DataTableForm
+              uniqueReceivedCurrencies={uniqueReceivedCurrencies}
+              uniqueSettlementCurrencies={uniqueSettlementCurrencies}
+              uniquePaymentMethods={uniquePaymentMethods}
+              uniqueStatuses={uniqueStatuses}
+            />
+          </div>
 
           <div className="min-h-0 flex-1 overflow-auto">
             <DataTable rows={filteredData} />
@@ -123,7 +135,7 @@ export default function Dashboard() {
         </div>
 
         {transactionModalState && transactionDetails && (
-          <aside className="h-[80vh] w-[320px] shrink-0">
+          <aside className="h-[82vh] w-[320px] shrink-0">
             <DataDialog
               transaction={transactionDetails}
               onClose={() => {
