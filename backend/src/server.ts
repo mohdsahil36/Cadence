@@ -1,7 +1,11 @@
 import express from "express";
+import "dotenv/config";
 import prisma from "./lib/prisma.js";
+import routes from "./routes/index.js";
 
 const app = express();
+
+app.use("/api", routes);
 
 const PORT = 3001;
 
@@ -12,7 +16,7 @@ app.get("/health", async (req, res) => {
 
     res.status(200).json({
       status: "ok",
-      database: "connected",
+      database: "Supabase Connected!",
       response,
     });
   } catch (error) {
@@ -20,7 +24,7 @@ app.get("/health", async (req, res) => {
 
     res.status(500).json({
       status: "error",
-      database: "disconnected",
+      database: "Supabase Disconnected!",
     });
   }
 });

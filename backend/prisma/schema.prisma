@@ -100,3 +100,64 @@ model Transaction {
   // When the transaction was created.
   createdAt DateTime @default(now())
 }
+
+model User {
+  id           String       @id
+  email        String       @unique
+  createDate   DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  repositories Repository[]
+}
+
+model Repository {
+  // Primary key - uniquely identifies the Repository
+  id String @id
+
+  userId String
+  user   User   @relation(fields: [userId], references: id)
+
+  // Repository name
+  name String
+
+  // Repository Owner name
+  owner String
+
+  // URL of the repository on Github
+  url String
+
+  //When the repository was added - in case none is provided then use the current datetime stamp
+  createdAt DateTime @default(now())
+
+  //commits made on the repository
+  commits Commit[]
+}
+
+// Commit model
+model Commit {
+  // Primary key for the commit records
+  id String @id
+
+  // Foreign Key connecting the commits to the repository
+  repositoryId String
+
+  // Connects Commit.repositoryId → Repository.id.
+  repository Repository @relation(fields: [repositoryId], references: [id])
+
+  // Git commit SHA value
+  sha String @unique
+
+  // Number of lines added in the commit
+  additions Int
+
+  //Number of line deleted in the commit
+  deletions Int
+
+  // When the commit was actually made
+  committedAt DateTime
+
+  // URL of the commit on Github
+  url String
+
+  //When this commit was added to our db
+  createdAt DateTime @default(now())
+}
