@@ -14,8 +14,8 @@ export default function LoginLayout({
     const prevBody = body.style.backgroundColor;
     const prevOverscroll = html.style.overscrollBehavior;
 
-    html.style.backgroundColor = "#0b1020";
-    body.style.backgroundColor = "#0b1020";
+    html.style.backgroundColor = "#0a0a0a";
+    body.style.backgroundColor = "#0a0a0a";
     html.style.overscrollBehavior = "none";
     body.style.overscrollBehavior = "none";
 
@@ -27,5 +27,5 @@ export default function LoginLayout({
     };
   }, []);
 
-  return <div className="min-h-svh bg-[#0b1020]">{children}</div>;
+  return <div className="min-h-svh bg-[#0a0a0a]">{children}</div>;
 }

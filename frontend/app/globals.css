@@ -137,3 +137,53 @@
     @apply font-heading tracking-[-0.02em];
   }
 }
+
+/* Lenis — required so native smooth scroll doesn't fight the virtual scroller */
+html.lenis,
+html.lenis-smooth {
+  height: auto;
+}
+html.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+html.lenis.lenis-stopped {
+  overflow: clip;
+}
+
+@keyframes cadence-grid-drift {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 28px 28px;
+  }
+}
+
+@keyframes cadence-ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-220px);
+  }
+}
+
+@keyframes cadence-orb {
+  0%,
+  100% {
+    transform: translate(0, 0);
+    opacity: 0.12;
+  }
+  50% {
+    transform: translate(28px, 18px);
+    opacity: 0.26;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cadence-grid-drift,
+  .cadence-ticker,
+  .cadence-orb {
+    animation: none !important;
+  }
+}

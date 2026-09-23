@@ -2,40 +2,26 @@ export const loginContent = {
   brand: "Cadence",
   nav: {
     signIn: "Sign in",
-    getStarted: "Get started",
+    howItWorks: "How it works",
   },
   hero: {
-    eyebrow: "Engineering rhythm",
-    title: "Understand how you build.",
+    badge: "Commit intelligence",
+    titleLead: "Understand how you",
+    titleAccent: "build.",
     cursive: "Commits, streaks, quiet hours — already a story.",
-    body: "Cadence turns the pace of your work into something you can actually see, without asking you to change how you ship.",
-    primaryCta: "Get started",
+    body: "Cadence turns the pace of your work into something you can actually see.",
+    primaryCta: "Connect with GitHub",
     secondaryCta: "See how it works",
-    notes: [
-      { label: "Signal", value: "Commits & streaks" },
-      { label: "Access", value: "Repos you choose" },
-      { label: "Privacy", value: "Scoped OAuth" },
-    ],
-    showcase: [
-      {
-        id: "pulse",
-        number: "01",
-        title: "Your pulse",
-        caption: "Every commit lands like a beat in the fog.",
-      },
-      {
-        id: "streak",
-        number: "02",
-        title: "Your streak",
-        caption: "Consistency made visible — without the noise.",
-      },
-      {
-        id: "quiet",
-        number: "03",
-        title: "Quiet hours",
-        caption: "The gaps between work tell their own story.",
-      },
-    ],
+    trust: ["Private by default", "Scoped OAuth", "Repos you choose"],
+    product: {
+      header: "This week",
+      live: "Live preview",
+      streak: "12 day streak",
+      commits: "47 commits",
+      quiet: "Quiet 1–5am",
+      repos: "3 repos synced",
+      footnote: "Sample rhythm — yours appears after GitHub",
+    },
   },
   auth: {
     eyebrow: "Welcome",
@@ -56,34 +42,43 @@ export const loginContent = {
     eyebrow: "How it works",
     title: "Three quiet steps.",
     cursive: "from connect to clarity",
-    hint: "Hover a card for a closer look.",
-    items: [
-      {
-        id: "connect",
-        number: "01",
+    hint: "A technical bento — hover the cells.",
+    bento: {
+      connect: {
         title: "Connect",
-        description: "Securely link your GitHub account in one click.",
-        detail: "OAuth keeps tokens scoped to the repos you approve.",
-        hoverLabel: "Linked",
+        body: "Link GitHub in one OAuth click. Tokens stay scoped to the repos you approve.",
+        terminal: "> connect github --scoped",
+        snippet: [
+          "const cadence = await auth.github()",
+          'cadence.scope(["repos:read"])',
+        ],
       },
-      {
-        id: "select",
-        number: "02",
+      select: {
         title: "Select",
-        description: "Pick the repositories you want Cadence to follow.",
-        detail: "Ignore noise. Track only the workstreams that matter.",
-        hoverLabel: "3 repos",
+        body: "Track only the workstreams that matter.",
+        features: [
+          "Repos you choose",
+          "Live commit sync",
+          "Ignore noise",
+          "Private by default",
+        ],
       },
-      {
-        id: "discover",
-        number: "03",
+      discover: {
         title: "Discover",
-        description: "Read commits, streaks and patterns as a clear rhythm.",
-        detail: "Quiet hours become insight you can act on.",
-        hoverLabelIdle: "99.9%",
-        hoverLabelActive: "+12 today",
+        body: "Commits, streaks and quiet hours as a clear rhythm.",
+        chips: ["Commits", "Streaks", "Quiet hours", "Rhythm", "+"],
       },
-    ],
+      private: {
+        title: "Private",
+        body: "Your graph stays yours. Nothing public by default.",
+        badge: "locked",
+      },
+      scoped: {
+        title: "Scoped",
+        body: "OAuth stays narrow — repos you pick, nothing else.",
+        pieces: ["OAuth", "Repos", "Sync", "You"],
+      },
+    },
   },
   close: {
     eyebrow: "Ready when you are",
@@ -93,4 +88,4 @@ export const loginContent = {
   },
 } as const;
 
-export type LoginStepId = (typeof loginContent.steps.items)[number]["id"];
+export type LoginStepId = keyof typeof loginContent.steps.bento;

@@ -299,7 +299,7 @@ export const CloudShader = ({
     ).matches;
 
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
       const w = Math.max(1, Math.floor(width * dpr));

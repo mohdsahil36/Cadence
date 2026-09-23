@@ -23,10 +23,7 @@ export function IsometricCube({
 }) {
   return (
     <motion.div
-      className={cn(
-        "relative mx-auto h-28 w-28 [transform-style:preserve-3d]",
-        className,
-      )}
+      className={cn("relative mx-auto h-28 w-28 transform-3d", className)}
       animate={{
         rotateX: active ? 52 : 60,
         rotateZ: active ? -38 : -45,
@@ -37,16 +34,16 @@ export function IsometricCube({
     >
       <div
         className={cn(
-          "absolute inset-0 flex items-center justify-center rounded-lg border border-white/15 bg-linear-to-br from-white/15 to-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] [transform:translateZ(28px)]",
+          "absolute inset-0 flex items-center justify-center rounded-lg border border-white/15 bg-linear-to-br from-white/15 to-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transform-[translateZ(28px)]",
           faceClassName,
         )}
       >
-        <div className="[transform:rotateZ(45deg)_rotateX(-60deg)]">
+        <div className="transform-[rotateZ(45deg)_rotateX(-60deg)]">
           {children}
         </div>
       </div>
-      <div className="absolute inset-0 rounded-lg border border-white/10 bg-white/[0.04] [transform:rotateY(90deg)_translateZ(28px)]" />
-      <div className="absolute inset-0 rounded-lg border border-white/10 bg-black/40 [transform:rotateX(-90deg)_translateZ(28px)]" />
+      <div className="absolute inset-0 rounded-lg border border-white/10 bg-white/4 transform-[rotateY(90deg)_translateZ(28px)]" />
+      <div className="absolute inset-0 rounded-lg border border-white/10 bg-black/40 transform-[rotateX(-90deg)_translateZ(28px)]" />
     </motion.div>
   );
 }
@@ -113,7 +110,7 @@ export function SelectIllustration({
       {[0, 1, 2].map((index) => (
         <motion.div
           key={index}
-          className="absolute h-14 w-20 rounded-xl border border-white/15 bg-linear-to-br from-white/12 to-white/[0.03] shadow-[8px_12px_24px_rgba(0,0,0,0.35)]"
+          className="absolute h-14 w-20 rounded-xl border border-white/15 bg-linear-to-br from-white/12 to-white/3 shadow-[8px_12px_24px_rgba(0,0,0,0.35)]"
           animate={{
             y: active ? index * -16 - 4 : index * -10,
             x: active ? index * 12 : index * 8,
@@ -156,7 +153,7 @@ export function DiscoverIllustration({
 
   return (
     <div className="relative flex h-36 items-end justify-center pb-4">
-      <div className="flex h-24 items-end gap-1.5 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-3 shadow-[10px_16px_30px_rgba(0,0,0,0.3)]">
+      <div className="flex h-24 items-end gap-1.5 rounded-2xl border border-white/10 bg-white/4 px-3 py-3 shadow-[10px_16px_30px_rgba(0,0,0,0.3)]">
         {bars.map((height, index) => (
           <motion.span
             key={index}

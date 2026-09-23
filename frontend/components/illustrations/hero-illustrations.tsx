@@ -1,176 +1,125 @@
 "use client";
 
-import { useId } from "react";
-import { motion } from "motion/react";
+import { useEffect, useId, useState } from "react";
+import { useReducedMotion } from "motion/react";
+import { loginContent } from "@/app/login/content";
 
-export type HeroSceneId = "pulse" | "streak" | "quiet";
+const HEAT = [
+  0.15, 0.35, 0.2, 0.55, 0.4, 0.75, 0.3, 0.9, 0.45, 0.25, 0.65, 0.5, 0.8, 0.35,
+  0.2, 0.7, 0.55, 0.95, 0.4, 0.6, 0.3, 0.85, 0.5, 0.25, 0.7, 0.45, 0.15, 0.55,
+];
 
-export function HeroPulseScene() {
-  return (
-    <div className="relative flex h-full w-full items-center justify-center">
-      {[0, 1, 2, 3].map((ring) => (
-        <motion.span
-          key={ring}
-          className="absolute rounded-full border border-white/20"
-          style={{
-            width: 56 + ring * 42,
-            height: 56 + ring * 42,
-          }}
-          animate={{
-            opacity: [0.15, 0.45, 0.15],
-            scale: [0.96, 1.04, 0.96],
-          }}
-          transition={{
-            duration: 3.2,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: ring * 0.35,
-          }}
-        />
-      ))}
+const CURVE = [14, 16, 18, 22, 20, 15, 12, 28, 44, 40, 34, 28, 20, 16];
 
-      <motion.div
-        className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-white/90 shadow-[0_0_40px_rgba(238,243,248,0.35)]"
-        animate={{ scale: [1, 1.06, 1] }}
-        transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <span className="h-2.5 w-2.5 rounded-full bg-[#0b1020]" />
-      </motion.div>
+const VIEWS = [
+  { label: "Commits", valueKey: "commits" as const },
+  { label: "Quiet", valueKey: "quiet" as const },
+  { label: "Scope", valueKey: "repos" as const },
+];
 
-      {[
-        { x: -78, y: -36, delay: 0.2 },
-        { x: 84, y: -18, delay: 0.8 },
-        { x: -56, y: 52, delay: 1.3 },
-        { x: 62, y: 44, delay: 1.7 },
-      ].map((spark, index) => (
-        <motion.span
-          key={index}
-          className="absolute h-1.5 w-1.5 rounded-full bg-white/70"
-          style={{
-            left: `calc(50% + ${spark.x}px)`,
-            top: `calc(50% + ${spark.y}px)`,
-          }}
-          animate={{ opacity: [0.2, 1, 0.2], y: [0, -6, 0] }}
-          transition={{
-            duration: 2.6,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: spark.delay,
-          }}
-        />
-      ))}
-    </div>
-  );
-}
-
-export function HeroStreakScene() {
-  const days = [0.35, 0.55, 0.25, 0.8, 0.45, 0.95, 0.6, 0.3, 0.7, 0.5, 0.85, 0.4];
-
-  return (
-    <div className="relative flex h-full w-full flex-col items-center justify-center gap-5 px-4">
-      <div className="grid w-full max-w-[15rem] grid-cols-6 gap-2">
-        {days.map((intensity, index) => (
-          <motion.span
-            key={index}
-            className="aspect-square rounded-lg bg-white"
-            style={{ opacity: 0.12 + intensity * 0.7 }}
-            animate={{
-              opacity: [
-                0.12 + intensity * 0.45,
-                0.18 + intensity * 0.75,
-                0.12 + intensity * 0.45,
-              ],
-            }}
-            transition={{
-              duration: 2.8,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: index * 0.08,
-            }}
-          />
-        ))}
-      </div>
-
-      <motion.div
-        className="flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5"
-        animate={{ y: [0, -3, 0] }}
-        transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <span className="h-1.5 w-1.5 rounded-full bg-white" />
-        <span className="text-[11px] tracking-[0.14em] text-white/75 uppercase">
-          12 day streak
-        </span>
-      </motion.div>
-    </div>
-  );
-}
-
-export function HeroQuietScene() {
+/** Live product preview — frosted glass, sits in the cloud atmosphere. */
+export function RhythmProductPanel() {
+  const reduceMotion = useReducedMotion();
   const fillId = useId().replace(/:/g, "");
-  const points = [18, 22, 20, 28, 24, 16, 14, 32, 48, 42, 36, 30, 22, 18];
+  const product = loginContent.hero.product;
+  const [view, setView] = useState(0);
+
+  useEffect(() => {
+    if (reduceMotion) return;
+    const timer = window.setInterval(() => {
+      setView((current) => (current + 1) % VIEWS.length);
+    }, 3200);
+    return () => window.clearInterval(timer);
+  }, [reduceMotion]);
 
   return (
-    <div className="relative flex h-full w-full items-center justify-center px-3">
-      <div className="relative h-40 w-full max-w-[17rem]">
-        <div className="absolute inset-x-0 top-8 h-px bg-white/10" />
-        <div className="absolute inset-x-0 top-1/2 h-px bg-white/10" />
-        <div className="absolute inset-x-0 bottom-8 h-px bg-white/10" />
+    <div className="relative flex h-full w-full flex-col overflow-hidden border border-white/12 bg-white/5">
+      <div className="border-b border-white/10 bg-white/4 px-4 py-2.5">
+        <p className="font-mono text-[11px] font-medium tracking-[0.08em] text-white/70 uppercase">
+          {product.live}
+        </p>
+      </div>
 
-        <svg
-          viewBox="0 0 280 160"
-          className="absolute inset-0 h-full w-full"
-          fill="none"
-          aria-hidden
-        >
-          <motion.path
-            d={`M 0 ${160 - points[0] * 2} ${points
-              .map(
-                (p, i) =>
-                  `L ${(i / (points.length - 1)) * 280} ${160 - p * 2}`,
-              )
-              .join(" ")}`}
-            stroke="rgba(238,243,248,0.75)"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            initial={{ pathLength: 0, opacity: 0.4 }}
-            animate={{ pathLength: 1, opacity: 1 }}
-            transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
-          />
-          <motion.path
-            d={`M 0 ${160 - points[0] * 2} ${points
-              .map(
-                (p, i) =>
-                  `L ${(i / (points.length - 1)) * 280} ${160 - p * 2}`,
-              )
-              .join(" ")} L 280 160 L 0 160 Z`}
-            fill={`url(#${fillId})`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.35 }}
-            transition={{ duration: 1.2, delay: 0.3 }}
-          />
-          <defs>
-            <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#eef3f8" stopOpacity="0.45" />
-              <stop offset="100%" stopColor="#eef3f8" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-        </svg>
+      <div className="relative flex flex-1 flex-col p-4 sm:p-5">
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <p className="font-serif text-xl tracking-[-0.03em] text-white">
+            {product.header}
+          </p>
+          <span className="border border-white/25 bg-black/30 px-2 py-1 font-mono text-[10px] tracking-widest text-white/80 uppercase shadow-[2px_2px_0_rgba(255,255,255,0.08)]">
+            {product.streak}
+          </span>
+        </div>
 
-        <motion.div
-          className="absolute top-3 right-2 rounded-full border border-white/15 bg-[#0b1020]/70 px-2.5 py-1 text-[10px] tracking-[0.12em] text-white/70 uppercase"
-          animate={{ opacity: [0.55, 1, 0.55] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        >
-          Quiet 1–5am
-        </motion.div>
+        <div className="grid grid-cols-7 gap-1">
+          {HEAT.map((intensity, index) => (
+            <span
+              key={index}
+              className="relative aspect-square overflow-hidden border border-white/10 bg-white/3"
+            >
+              <span
+                className="absolute inset-0 bg-white"
+                style={{ opacity: 0.08 + intensity * 0.55 }}
+              />
+            </span>
+          ))}
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 gap-1.5">
+          {VIEWS.map((item, index) => (
+            <div
+              key={item.label}
+              className={`border px-2 py-2 transition-colors duration-500 ${
+                index === view
+                  ? "border-white/30 bg-white/8"
+                  : "border-white/12 bg-white/3"
+              }`}
+            >
+              <p className="font-mono text-[9px] tracking-[0.12em] text-white/40 uppercase">
+                {item.label}
+              </p>
+              <p className="mt-1 text-[12px] font-medium tracking-[-0.02em] text-white/85">
+                {product[item.valueKey]}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="relative mt-4 h-20 overflow-hidden border border-white/12 bg-black/25 px-2 pt-2">
+          <svg
+            viewBox="0 0 280 96"
+            className="h-full w-full"
+            fill="none"
+            aria-hidden
+          >
+            <path
+              d={`M 0 ${96 - CURVE[0]} ${CURVE.map(
+                (p, i) => `L ${(i / (CURVE.length - 1)) * 280} ${96 - p}`,
+              ).join(" ")}`}
+              stroke="rgba(255,255,255,0.75)"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d={`M 0 ${96 - CURVE[0]} ${CURVE.map(
+                (p, i) => `L ${(i / (CURVE.length - 1)) * 280} ${96 - p}`,
+              ).join(" ")} L 280 96 L 0 96 Z`}
+              fill={`url(#${fillId})`}
+              opacity={0.4}
+            />
+            <defs>
+              <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#fff" stopOpacity="0.3" />
+                <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
+        <p className="mt-3 font-mono text-[10px] leading-4 tracking-[0.04em] text-white/40">
+          {product.footnote}
+        </p>
       </div>
     </div>
   );
 }
-
-export const HERO_SCENES = {
-  pulse: HeroPulseScene,
-  streak: HeroStreakScene,
-  quiet: HeroQuietScene,
-} as const;
