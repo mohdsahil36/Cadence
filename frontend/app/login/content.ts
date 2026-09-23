@@ -40,7 +40,7 @@ export const loginContent = {
   },
   steps: {
     eyebrow: "How it works",
-    title: "Three quiet steps.",
+    title: "Quiet steps.",
     cursive: "from connect to clarity",
     hint: "A technical bento — hover the cells.",
     bento: {
@@ -64,8 +64,8 @@ export const loginContent = {
         ],
       },
       discover: {
-        title: "Discover",
-        body: "Commits, streaks and quiet hours as a clear rhythm.",
+        title: "Rhythm",
+        body: "Commits land on a graph — streaks and quiet hours, GitHub-familiar.",
         chips: ["Commits", "Streaks", "Quiet hours", "Rhythm", "+"],
       },
       private: {

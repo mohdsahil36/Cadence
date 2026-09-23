@@ -9,7 +9,10 @@ import {
   useReducedMotion,
 } from "motion/react";
 import { CloudShader } from "@/components/ui/cloud-shader";
-import { RhythmProductPanel } from "@/components/illustrations/hero-illustrations";
+import {
+  ContributionGraph,
+  RhythmProductPanel,
+} from "@/components/illustrations/hero-illustrations";
 import { loginContent } from "./content";
 
 /** Atmospheric chrome — no backdrop-blur (it janks Lenis scroll over WebGL). */
@@ -133,7 +136,7 @@ export default function LoginPage() {
       <section className="relative z-10 mx-auto w-full max-w-5xl px-5 pb-16 pt-2 sm:px-8 lg:px-4">
         <div className={chrome.shell}>
           <div className="grid grid-cols-1 gap-2 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className={`flex min-h-[420px] flex-col ${chrome.cell}`}>
+            <div className={`flex min-h-105 flex-col ${chrome.cell}`}>
               <div className={chrome.head}>
                 <p className="inline-flex items-center gap-2 font-mono text-[11px] font-medium tracking-[0.08em] text-white/70 uppercase">
                   <span className="h-1.5 w-1.5 rounded-full bg-white/80" />
@@ -207,7 +210,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="min-h-[420px]">
+            <div className="min-h-105">
               <RhythmProductPanel />
             </div>
           </div>
@@ -224,7 +227,7 @@ export default function LoginPage() {
 
       <section className="relative z-10 px-5 pb-24 sm:px-8 lg:px-4">
         <div className="relative mx-auto max-w-5xl">
-          <div className="pointer-events-none absolute inset-0 -z-0 overflow-hidden">
+          <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
             <BentoAtmosphere reduceMotion={!!reduceMotion} />
           </div>
           <div className={`relative z-10 ${chrome.shell}`}>
@@ -390,12 +393,12 @@ function StepsBento() {
         </p>
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 top-24 bottom-0 -z-0 overflow-hidden">
+      <div className="pointer-events-none absolute inset-x-0 top-24 bottom-0 z-0 overflow-hidden">
         <BentoAtmosphere reduceMotion={!!reduceMotion} />
       </div>
 
       <div className={`relative z-10 ${chrome.shell}`}>
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-3 md:grid-rows-[minmax(280px,1.15fr)_minmax(200px,0.85fr)]">
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-3 md:grid-rows-[auto_auto]">
           <BentoCell className="md:row-span-2" delay={0}>
             <BentoHead>{bento.connect.title}</BentoHead>
             <div className="flex flex-1 flex-col gap-4 p-4 sm:p-5">
@@ -426,31 +429,7 @@ function StepsBento() {
             </div>
           </BentoCell>
 
-          <BentoCell delay={0.1}>
-            <BentoHead>{bento.discover.title}</BentoHead>
-            <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
-              <p className="text-[13px] leading-5 text-white/60">
-                {bento.discover.body}
-              </p>
-              <div className="mt-auto">
-                <DiscoverChips chips={[...bento.discover.chips]} />
-              </div>
-            </div>
-          </BentoCell>
-
-          <BentoCell delay={0.15}>
-            <BentoHead>{bento.private.title}</BentoHead>
-            <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
-              <p className="text-[13px] leading-5 text-white/60">
-                {bento.private.body}
-              </p>
-              <div className="mt-auto flex justify-center pb-1">
-                <PrivateBadge label={bento.private.badge} />
-              </div>
-            </div>
-          </BentoCell>
-
-          <BentoCell delay={0.2}>
+          <BentoCell delay={0.08}>
             <BentoHead>{bento.scoped.title}</BentoHead>
             <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
               <p className="text-[13px] leading-5 text-white/60">
@@ -458,6 +437,23 @@ function StepsBento() {
               </p>
               <div className="mt-auto flex justify-center pb-1">
                 <ScopedPuzzle pieces={[...bento.scoped.pieces]} />
+              </div>
+            </div>
+          </BentoCell>
+
+          <BentoCell className="md:col-span-2" delay={0.12}>
+            <BentoHead>{bento.discover.title}</BentoHead>
+            <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <p className="max-w-md text-[13px] leading-5 text-white/60">
+                  {bento.discover.body}
+                </p>
+                <p className="font-mono text-[10px] tracking-[0.08em] text-white/35 uppercase">
+                  {bento.private.badge} · {bento.private.title}
+                </p>
+              </div>
+              <div className="mt-auto rounded-sm border border-white/10 bg-black/30 p-3 sm:p-4">
+                <ContributionGraph compact />
               </div>
             </div>
           </BentoCell>
@@ -490,7 +486,7 @@ function BentoCell({
 
   return (
     <motion.article
-      className={`group flex min-h-[240px] flex-col overflow-hidden transition-[border-color,background-color] duration-200 ease-out hover:border-white/25 hover:bg-white/[0.07] ${chrome.cell} ${className}`}
+      className={`group flex min-h-60 flex-col overflow-hidden transition-[border-color,background-color] duration-200 ease-out hover:border-white/25 hover:bg-white/[0.07] ${chrome.cell} ${className}`}
       initial={reduceMotion ? false : { opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
@@ -614,7 +610,7 @@ function SelectPlanes() {
   return (
     <svg
       viewBox="0 0 180 110"
-      className="h-[88px] w-full max-w-[200px]"
+      className="h-22 w-full max-w-50"
       aria-hidden
     >
       <defs>
@@ -676,74 +672,6 @@ function SelectPlanes() {
   );
 }
 
-function DiscoverChips({ chips }: { chips: string[] }) {
-  const reduceMotion = useReducedMotion();
-
-  return (
-    <div
-      className="relative h-[110px] overflow-hidden border border-white/15 bg-black/25"
-      style={{
-        backgroundImage:
-          "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)",
-        backgroundSize: "16px 16px",
-      }}
-    >
-      {chips.map((chip, i) => {
-        const positions = [
-          { top: 14, left: 10, rot: -6 },
-          { top: 18, left: 78, rot: 4 },
-          { top: 58, left: 28, rot: -2 },
-          { top: 52, left: 108, rot: 7 },
-          { top: 72, left: 168, rot: 0 },
-        ][i] ?? { top: 40, left: 40 + i * 20, rot: 0 };
-
-        return (
-          <motion.span
-            key={chip}
-            className="absolute border border-white/25 bg-black/50 px-2 py-1 font-mono text-[10px] tracking-wide text-white/85 uppercase shadow-[2px_2px_0_rgba(255,255,255,0.08)]"
-            style={{
-              top: positions.top,
-              left: positions.left,
-              rotate: `${positions.rot}deg`,
-            }}
-            animate={
-              reduceMotion ? undefined : { y: [0, i % 2 === 0 ? -2 : 1.5, 0] }
-            }
-            transition={{
-              duration: 5.5 + i * 0.4,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: i * 0.25,
-            }}
-          >
-            {chip}
-          </motion.span>
-        );
-      })}
-    </div>
-  );
-}
-
-function PrivateBadge({ label }: { label: string }) {
-  return (
-    <div
-      className="relative w-[128px] border border-white/25 bg-black/40 px-3 py-4 text-center shadow-[3px_3px_0_rgba(255,255,255,0.08)] transition-transform duration-300 ease-out group-hover:-rotate-1"
-      style={{
-        clipPath:
-          "polygon(8% 0, 92% 0, 100% 18%, 100% 82%, 92% 100%, 8% 100%, 0 82%, 0 18%)",
-      }}
-    >
-      <Stipple />
-      <p className="relative font-mono text-[11px] tracking-[0.12em] text-white/55 uppercase">
-        by default
-      </p>
-      <p className="relative mt-1 font-mono text-base tracking-tight text-white">
-        {label}
-      </p>
-    </div>
-  );
-}
-
 function ScopedPuzzle({ pieces }: { pieces: string[] }) {
   const slots = [
     { x: 8, y: 8 },
@@ -753,11 +681,11 @@ function ScopedPuzzle({ pieces }: { pieces: string[] }) {
   ];
 
   return (
-    <div className="relative h-[100px] w-[120px]">
+    <div className="relative h-25 w-30">
       {pieces.map((piece, i) => (
         <div
           key={piece}
-          className="absolute flex h-10 w-10 items-center justify-center border border-white/25 bg-black/40 font-mono text-[8px] tracking-wide text-white/80 uppercase shadow-[2px_2px_0_rgba(255,255,255,0.08)] transition-transform duration-300 ease-out group-hover:translate-y-[-1px]"
+          className="absolute flex h-10 w-10 items-center justify-center border border-white/25 bg-black/40 font-mono text-[8px] tracking-wide text-white/80 uppercase shadow-[2px_2px_0_rgba(255,255,255,0.08)] transition-transform duration-300 ease-out group-hover:-translate-y-px"
           style={{
             left: slots[i]?.x,
             top: slots[i]?.y,
@@ -801,7 +729,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
 
 function InfoChip({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex min-h-16 flex-col border border-white/15 bg-white/[0.04] px-3 py-2.5">
+    <div className="flex min-h-16 flex-col border border-white/15 bg-white/4 px-3 py-2.5">
       <p className="font-mono text-[9px] tracking-[0.12em] text-white/40 uppercase">
         {label}
       </p>

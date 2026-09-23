@@ -1,40 +1,146 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
-import { useReducedMotion } from "motion/react";
 import { loginContent } from "@/app/login/content";
 
-const HEAT = [
-  0.15, 0.35, 0.2, 0.55, 0.4, 0.75, 0.3, 0.9, 0.45, 0.25, 0.65, 0.5, 0.8, 0.35,
-  0.2, 0.7, 0.55, 0.95, 0.4, 0.6, 0.3, 0.85, 0.5, 0.25, 0.7, 0.45, 0.15, 0.55,
-];
+const DAYS = ["", "Mon", "", "Wed", "", "Fri", ""] as const;
+const MONTHS = ["Jan", "Feb", "Mar", "Apr"] as const;
 
-const CURVE = [14, 16, 18, 22, 20, 15, 12, 28, 44, 40, 34, 28, 20, 16];
+/** Deterministic fake year of contributions — denser toward recent weeks. */
+function buildWeeks(weekCount: number): number[][] {
+  const weeks: number[][] = [];
+  for (let w = 0; w < weekCount; w++) {
+    const recency = w / Math.max(1, weekCount - 1);
+    const days: number[] = [];
+    for (let d = 0; d < 7; d++) {
+      const n =
+        Math.sin(w * 1.7 + d * 2.3) * 0.5 +
+        Math.cos(w * 0.9 - d) * 0.35 +
+        recency * 0.55;
+      if (n < 0.05) days.push(0);
+      else if (n < 0.28) days.push(1);
+      else if (n < 0.52) days.push(2);
+      else if (n < 0.78) days.push(3);
+      else days.push(4);
+    }
+    weeks.push(days);
+  }
+  return weeks;
+}
 
-const VIEWS = [
-  { label: "Commits", valueKey: "commits" as const },
-  { label: "Quiet", valueKey: "quiet" as const },
-  { label: "Scope", valueKey: "repos" as const },
-];
+const LEVEL_OPACITY = [0.06, 0.2, 0.4, 0.65, 0.9] as const;
 
-/** Live product preview — frosted glass, sits in the cloud atmosphere. */
-export function RhythmProductPanel() {
-  const reduceMotion = useReducedMotion();
-  const fillId = useId().replace(/:/g, "");
-  const product = loginContent.hero.product;
-  const [view, setView] = useState(0);
+type ContributionGraphProps = {
+  compact?: boolean;
+  className?: string;
+};
 
-  useEffect(() => {
-    if (reduceMotion) return;
-    const timer = window.setInterval(() => {
-      setView((current) => (current + 1) % VIEWS.length);
-    }, 3200);
-    return () => window.clearInterval(timer);
-  }, [reduceMotion]);
+/** GitHub-style contribution calendar (monochrome). */
+export function ContributionGraph({
+  compact = false,
+  className = "",
+}: ContributionGraphProps) {
+  const weekCount = compact ? 12 : 18;
+  const weeks = buildWeeks(weekCount);
+  const cell = compact ? "h-[9px] w-[9px]" : "h-[11px] w-[11px]";
+  const gap = compact ? "gap-[2px]" : "gap-[3px]";
 
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden border border-white/12 bg-white/5">
-      <div className="border-b border-white/10 bg-white/4 px-4 py-2.5">
+    <div className={`w-full ${className}`}>
+      {!compact ? (
+        <div className="mb-2 flex items-baseline justify-between gap-2">
+          <p className="font-mono text-[11px] text-white/55">
+            <span className="text-white/85">47</span> contributions in the last
+            year
+          </p>
+        </div>
+      ) : null}
+
+      <div className="flex gap-1.5 overflow-x-auto pb-1">
+        <div
+          className={`grid shrink-0 grid-rows-7 pt-[14px] font-mono text-[9px] leading-none text-white/35 ${gap}`}
+        >
+          {DAYS.map((label, i) => (
+            <span
+              key={`d-${i}`}
+              className={`flex items-center ${compact ? "h-[9px]" : "h-[11px]"}`}
+            >
+              {label}
+            </span>
+          ))}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div
+            className="mb-1 grid font-mono text-[9px] text-white/35"
+            style={{
+              gridTemplateColumns: `repeat(${weekCount}, minmax(0, 1fr))`,
+            }}
+          >
+            {Array.from({ length: weekCount }, (_, i) => {
+              const show =
+                i === 0 ||
+                i === Math.floor(weekCount / 3) ||
+                i === Math.floor((weekCount * 2) / 3);
+              const monthIdx =
+                i === 0
+                  ? 0
+                  : i === Math.floor(weekCount / 3)
+                    ? 1
+                    : i === Math.floor((weekCount * 2) / 3)
+                      ? 2
+                      : 3;
+              return (
+                <span key={`m-${i}`} className="truncate">
+                  {show ? MONTHS[monthIdx] : ""}
+                </span>
+              );
+            })}
+          </div>
+
+          <div className={`flex ${gap}`}>
+            {weeks.map((week, wi) => (
+              <div key={wi} className={`grid grid-rows-7 ${gap}`}>
+                {week.map((level, di) => (
+                  <span
+                    key={`${wi}-${di}`}
+                    title={`${level} contributions`}
+                    className={`rounded-[2px] bg-white ${cell}`}
+                    style={{ opacity: LEVEL_OPACITY[level] }}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-2.5 flex items-center justify-between gap-3">
+        <p className="font-mono text-[9px] tracking-[0.04em] text-white/30">
+          Learn how Cadence counts commits
+        </p>
+        <div className="flex items-center gap-1 font-mono text-[9px] text-white/35">
+          <span>Less</span>
+          {LEVEL_OPACITY.map((opacity, i) => (
+            <span
+              key={i}
+              className="inline-block h-[9px] w-[9px] rounded-[2px] bg-white"
+              style={{ opacity }}
+            />
+          ))}
+          <span>More</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Live product preview — GitHub contribution graph + cadence stats. */
+export function RhythmProductPanel() {
+  const product = loginContent.hero.product;
+
+  return (
+    <div className="relative flex h-full w-full flex-col overflow-hidden border border-white/12 bg-white/[0.04]">
+      <div className="border-b border-white/10 bg-white/[0.03] px-4 py-2.5">
         <p className="font-mono text-[11px] font-medium tracking-[0.08em] text-white/70 uppercase">
           {product.live}
         </p>
@@ -50,70 +156,28 @@ export function RhythmProductPanel() {
           </span>
         </div>
 
-        <div className="grid grid-cols-7 gap-1">
-          {HEAT.map((intensity, index) => (
-            <span
-              key={index}
-              className="relative aspect-square overflow-hidden border border-white/10 bg-white/3"
-            >
-              <span
-                className="absolute inset-0 bg-white"
-                style={{ opacity: 0.08 + intensity * 0.55 }}
-              />
-            </span>
-          ))}
-        </div>
+        <ContributionGraph />
 
         <div className="mt-4 grid grid-cols-3 gap-1.5">
-          {VIEWS.map((item, index) => (
+          {(
+            [
+              { label: "Commits", value: product.commits },
+              { label: "Quiet", value: product.quiet },
+              { label: "Scope", value: product.repos },
+            ] as const
+          ).map((item) => (
             <div
               key={item.label}
-              className={`border px-2 py-2 transition-colors duration-500 ${
-                index === view
-                  ? "border-white/30 bg-white/8"
-                  : "border-white/12 bg-white/3"
-              }`}
+              className="border border-white/12 bg-white/[0.03] px-2 py-2"
             >
               <p className="font-mono text-[9px] tracking-[0.12em] text-white/40 uppercase">
                 {item.label}
               </p>
               <p className="mt-1 text-[12px] font-medium tracking-[-0.02em] text-white/85">
-                {product[item.valueKey]}
+                {item.value}
               </p>
             </div>
           ))}
-        </div>
-
-        <div className="relative mt-4 h-20 overflow-hidden border border-white/12 bg-black/25 px-2 pt-2">
-          <svg
-            viewBox="0 0 280 96"
-            className="h-full w-full"
-            fill="none"
-            aria-hidden
-          >
-            <path
-              d={`M 0 ${96 - CURVE[0]} ${CURVE.map(
-                (p, i) => `L ${(i / (CURVE.length - 1)) * 280} ${96 - p}`,
-              ).join(" ")}`}
-              stroke="rgba(255,255,255,0.75)"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d={`M 0 ${96 - CURVE[0]} ${CURVE.map(
-                (p, i) => `L ${(i / (CURVE.length - 1)) * 280} ${96 - p}`,
-              ).join(" ")} L 280 96 L 0 96 Z`}
-              fill={`url(#${fillId})`}
-              opacity={0.4}
-            />
-            <defs>
-              <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#fff" stopOpacity="0.3" />
-                <stop offset="100%" stopColor="#fff" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-          </svg>
         </div>
 
         <p className="mt-3 font-mono text-[10px] leading-4 tracking-[0.04em] text-white/40">
