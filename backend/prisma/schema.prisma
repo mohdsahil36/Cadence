@@ -1,0 +1,163 @@
+// Prisma schema - defines the structure of our PostgreSQL database.
+//
+// Data flow:
+// schema.prisma
+//      ↓
+// Prisma Migrate
+//      ↓
+// PostgreSQL (Supabase)
+//      ↓
+// Prisma Client
+//      ↓
+// Express API
+
+// Generates Prisma Client for database queries
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+// Connects Prisma to our PostgreSQL database
+// DATABASE_URL is stored in the .env file
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Merchant {
+  // Primary key: uniquely identifies each merchant.
+  // Example: merch_10078
+  id String @id
+
+  // Merchant's display name.
+  name String
+
+  // Merchant's country code.
+  // Example: GB
+  country String
+
+  // When the merchant was created.
+  createdAt DateTime @default(now())
+
+  // Automatically updated when the merchant is modified.
+  updatedAt DateTime @updatedAt
+
+  // One merchant can have multiple transactions.
+  transactions Transaction[]
+}
+
+model Transaction {
+  // Primary key: uniquely identifies each transaction.
+  id String @id
+
+  // Foreign key: connects this transaction to a merchant.
+  // This value must match an existing Merchant.id.
+  merchantId String
+
+  // Connects Transaction.merchantId → Merchant.id.
+  //
+  // Example:
+  // Transaction.merchantId = "merch_10078"
+  //              ↓
+  // Merchant.id   = "merch_10078"
+  //
+  // This means the transaction belongs to that merchant.
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+
+  // Payment amount in the original transaction currency.
+  amount Decimal
+
+  // Currency in which the original payment was made.
+  currency String
+
+  // Amount converted to the settlement currency.
+  settlementAmount Decimal
+
+  // Currency in which the merchant is settled.
+  settlementCurrency String
+
+  // Exchange rate used for the currency conversion.
+  exchangeRate Decimal
+
+  // Fee charged for the transaction.
+  fee Decimal
+
+  // Amount remaining after deducting the fee.
+  netAmount Decimal
+
+  // Current status of the transaction.
+  status String
+
+  // Payment method used by the customer.
+  paymentMethod String
+
+  // Card brand, when the payment method is a card.
+  cardBrand String?
+
+  // Optional description of the transaction.
+  description String?
+
+  // When the transaction was created.
+  createdAt DateTime @default(now())
+}
+
+model User {
+  id           String       @id
+  email        String       @unique
+  createDate   DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  repositories Repository[]
+}
+
+model Repository {
+  // Primary key - uniquely identifies the Repository
+  id String @id
+
+  userId String
+  user   User   @relation(fields: [userId], references: id)
+
+  // Repository name
+  name String
+
+  // Repository Owner name
+  owner String
+
+  // URL of the repository on Github
+  url String
+
+  //When the repository was added - in case none is provided then use the current datetime stamp
+  createdAt DateTime @default(now())
+
+  //commits made on the repository
+  commits Commit[]
+}
+
+// Commit model
+model Commit {
+  // Primary key for the commit records
+  id String @id
+
+  // Foreign Key connecting the commits to the repository
+  repositoryId String
+
+  // Connects Commit.repositoryId → Repository.id.
+  repository Repository @relation(fields: [repositoryId], references: [id])
+
+  // Git commit SHA value
+  sha String @unique
+
+  // Number of lines added in the commit
+  additions Int
+
+  //Number of line deleted in the commit
+  deletions Int
+
+  // When the commit was actually made
+  committedAt DateTime
+
+  // URL of the commit on Github
+  url String
+
+  //When this commit was added to our db
+  createdAt DateTime @default(now())
+}

@@ -6,6 +6,12 @@
 CLAUDE.md
 AGENTS.md
 
+# Dependencies (any package root)
+node_modules/
+
+# Graphify generated knowledge graph
+graphify-out/
+
 # Frontend
 frontend/node_modules/
 frontend/.next/
@@ -15,6 +21,7 @@ frontend/build/
 # Backend
 backend/node_modules/
 backend/dist/
+backend/src/generated/prisma/
 
 # Environment variables
 .env
