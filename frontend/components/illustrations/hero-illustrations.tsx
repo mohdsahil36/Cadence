@@ -1,6 +1,15 @@
 "use client";
 
-import { loginContent } from "@/app/login/content";
+/** Legacy Cadence preview copy — unused by Nocta login; kept for local demos. */
+const PRODUCT_PREVIEW = {
+  live: "Live preview",
+  header: "Quiet steps.",
+  streak: "12 day streak",
+  commits: "48",
+  quiet: "6",
+  repos: "3",
+  footnote: "Private by default. No public feed.",
+} as const;
 
 const DAYS = ["", "Mon", "", "Wed", "", "Fri", ""] as const;
 const MONTHS = ["Jan", "Feb", "Mar", "Apr"] as const;
@@ -136,7 +145,7 @@ export function ContributionGraph({
 
 /** Live product preview — GitHub contribution graph + cadence stats. */
 export function RhythmProductPanel() {
-  const product = loginContent.hero.product;
+  const product = PRODUCT_PREVIEW;
 
   return (
     <div className="relative flex h-full w-full flex-col overflow-hidden border border-white/12 bg-white/[0.04]">

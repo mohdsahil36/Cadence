@@ -1,91 +1,85 @@
 export const loginContent = {
-  brand: "Cadence",
+  brand: "Nocta",
   nav: {
-    signIn: "Sign in",
     howItWorks: "How it works",
+    about: "About",
+    cta: "Get started",
   },
   hero: {
-    badge: "Commit intelligence",
-    titleLead: "Understand how you",
-    titleAccent: "build.",
-    cursive: "Commits, streaks, quiet hours — already a story.",
-    body: "Cadence turns the pace of your work into something you can actually see.",
-    primaryCta: "Connect with GitHub",
-    secondaryCta: "See how it works",
-    trust: ["Private by default", "Scoped OAuth", "Repos you choose"],
-    product: {
-      header: "This week",
-      live: "Live preview",
-      streak: "12 day streak",
-      commits: "47 commits",
-      quiet: "Quiet 1–5am",
-      repos: "3 repos synced",
-      footnote: "Sample rhythm — yours appears after GitHub",
-    },
-  },
-  auth: {
-    eyebrow: "Welcome",
-    title: "Your code.",
-    titleAccent: "Your cadence.",
-    body: "Connect GitHub to begin. We only sync what you choose.",
-    cta: "Continue with GitHub",
-    divider: "private by default",
-    chips: [
-      { label: "Access", value: "Repos you choose" },
-      { label: "Sync", value: "Live commits" },
+    wordmark: "Nocta",
+    title: "Decide tonight",
+    tagline: "One meaningful action, every night.",
+    body: "Each evening, Nocta scores your goals, picks one next step, and protects rest when you need it.",
+    rotating: [
+      "Deadlines and neglect — not noise — set the score.",
+      "One next step. Then the night is yours.",
+      "Recovery nights count. Rest is a valid priority.",
+      "Quiet categories rise when they have waited too long.",
+      "Leave the desk with clarity, not another list.",
     ],
-    privacy:
-      "Cadence only accesses GitHub data for the repositories you choose.",
-    close: "Close",
+    primaryCta: "Start tonight",
+    secondaryCta: "See how it works",
   },
-  steps: {
-    eyebrow: "How it works",
-    title: "Quiet steps.",
-    cursive: "from connect to clarity",
-    hint: "A technical bento — hover the cells.",
-    bento: {
-      connect: {
-        title: "Connect",
-        body: "Link GitHub in one OAuth click. Tokens stay scoped to the repos you approve.",
-        terminal: "> connect github --scoped",
-        snippet: [
-          "const cadence = await auth.github()",
-          'cadence.scope(["repos:read"])',
-        ],
+  why: {
+    eyebrow: "Why Nocta exists",
+    before: "After work the list never ended, and the night was already short.",
+    // Core idea — italic serif, lights up on scroll
+    emphasis: "Score what matters. Pick one next step.",
+    after: "Let rest stay honest.",
+  },
+  features: {
+    title: "How Nocta works.",
+    items: [
+      {
+        id: "scoring",
+        title: "Deterministic scoring",
+        description:
+          "Clear rules on deadlines and neglect decide priority — never a model guessing what matters.",
+        span: "third",
       },
-      select: {
-        title: "Select",
-        body: "Track only the workstreams that matter.",
-        features: [
-          "Repos you choose",
-          "Live commit sync",
-          "Ignore noise",
-          "Private by default",
-        ],
+      {
+        id: "one-action",
+        title: "One action, not a list",
+        description:
+          "Tonight ends with a single next step, so you close the laptop knowing what mattered.",
+        span: "two-thirds",
       },
-      discover: {
-        title: "Rhythm",
-        body: "Commits land on a graph — streaks and quiet hours, GitHub-familiar.",
-        chips: ["Commits", "Streaks", "Quiet hours", "Rhythm", "+"],
+      {
+        id: "reflection",
+        title: "Weekly reflection",
+        description:
+          "A short weekly pass to notice patterns — without turning life into a dashboard.",
+        span: "third",
       },
-      private: {
-        title: "Private",
-        body: "Your graph stays yours. Nothing public by default.",
-        badge: "locked",
+      {
+        id: "recovery",
+        title: "Recovery nights",
+        description:
+          "Some nights the right action is rest. Nocta protects that choice without guilt.",
+        span: "third",
       },
-      scoped: {
-        title: "Scoped",
-        body: "OAuth stays narrow — repos you pick, nothing else.",
-        pieces: ["OAuth", "Repos", "Sync", "You"],
+      {
+        id: "neglected",
+        title: "Neglected-area tracking",
+        description:
+          "Quiet goal categories surface when they have been ignored for too long.",
+        span: "third",
       },
-    },
+    ],
   },
   close: {
-    eyebrow: "Ready when you are",
-    title: "Start reading your rhythm.",
-    cursive: "no setup theatre — just GitHub",
-    cta: "Sign in with GitHub",
+    title: "Tonight, do one thing that matters",
+    body: "Open Nocta after work, see the score, and choose a single action before you sleep.",
+    cta: "Get started",
+    trust: "Built by a developer job-hunting after work",
+  },
+  auth: {
+    title: "Start tonight",
+    body: "Account and sync ship in a later build. For now, explore how Nocta thinks.",
+    // deferred to v2: real auth + session
+    cta: "Continue",
+    close: "Close",
   },
 } as const;
 
-export type LoginStepId = keyof typeof loginContent.steps.bento;
+export type NoctaFeatureId = (typeof loginContent.features.items)[number]["id"];
