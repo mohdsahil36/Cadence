@@ -159,39 +159,52 @@ export function OneActionVisual({ className, wide }: VisualProps) {
         {cards.map((card, i) => {
           const offset = (i - index + cards.length) % cards.length;
           const isFront = offset === 0;
+          const isVisible = offset <= 2;
           return (
             <motion.div
               key={card.title}
-              className="absolute inset-x-0 top-0 rounded-2xl border border-white/20 bg-background/70 p-4 shadow-lg backdrop-blur-md dark:border-white/10 dark:bg-background/45 sm:p-5"
+              aria-hidden={!isFront}
+              className={cn(
+                "absolute inset-x-0 top-0 overflow-hidden rounded-2xl border p-4 shadow-lg sm:p-5",
+                // Opaque shells so stacked cards don't ghost through in dark mode
+                isFront
+                  ? "border-border/40 bg-card text-card-foreground dark:border-white/12 dark:bg-zinc-900"
+                  : "border-border/25 bg-muted dark:border-white/8 dark:bg-zinc-800/90",
+              )}
               animate={{
                 y: offset * (wide ? 14 : 10),
                 scale: 1 - offset * 0.05,
                 zIndex: cards.length - offset,
-                opacity: offset > 2 ? 0 : 1,
+                opacity: isVisible ? (isFront ? 1 : 0.55 - offset * 0.12) : 0,
               }}
               transition={{ type: "spring", stiffness: 260, damping: 26 }}
             >
-              <p
-                className={cn(
-                  "font-semibold text-foreground",
-                  wide ? "text-sm sm:text-base" : "text-xs",
-                )}
-              >
-                {card.title}
-              </p>
-              <p className="mt-1 text-[10px] text-muted-foreground sm:text-[11px]">
-                {card.meta}
-              </p>
-              {wide && isFront ? (
-                <p className="mt-2 text-xs text-muted-foreground/80">
-                  {card.detail}
-                </p>
-              ) : null}
+              {/* Only the front card shows copy — backs are blank depth plates */}
               {isFront ? (
-                <span className="mt-3 inline-flex rounded-full bg-foreground px-3 py-1.5 text-[10px] font-medium text-background sm:text-[11px]">
-                  Choose tonight
-                </span>
-              ) : null}
+                <>
+                  <p
+                    className={cn(
+                      "font-semibold text-foreground",
+                      wide ? "text-sm sm:text-base" : "text-xs",
+                    )}
+                  >
+                    {card.title}
+                  </p>
+                  <p className="mt-1 text-[10px] text-muted-foreground sm:text-[11px]">
+                    {card.meta}
+                  </p>
+                  {wide ? (
+                    <p className="mt-2 text-xs text-muted-foreground/80">
+                      {card.detail}
+                    </p>
+                  ) : null}
+                  <span className="mt-3 inline-flex rounded-full bg-foreground px-3 py-1.5 text-[10px] font-medium text-background sm:text-[11px]">
+                    Choose tonight
+                  </span>
+                </>
+              ) : (
+                <div className="h-16 sm:h-20" aria-hidden />
+              )}
             </motion.div>
           );
         })}

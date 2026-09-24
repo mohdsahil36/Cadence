@@ -66,12 +66,12 @@ export function ContributionGraph({
 
       <div className="flex gap-1.5 overflow-x-auto pb-1">
         <div
-          className={`grid shrink-0 grid-rows-7 pt-[14px] font-mono text-[9px] leading-none text-white/35 ${gap}`}
+          className={`grid shrink-0 grid-rows-7 pt-3.5 font-mono text-[9px] leading-none text-white/35 ${gap}`}
         >
           {DAYS.map((label, i) => (
             <span
               key={`d-${i}`}
-              className={`flex items-center ${compact ? "h-[9px]" : "h-[11px]"}`}
+              className={`flex items-center ${compact ? "h-2.25" : "h-2.75"}`}
             >
               {label}
             </span>
@@ -113,7 +113,7 @@ export function ContributionGraph({
                   <span
                     key={`${wi}-${di}`}
                     title={`${level} contributions`}
-                    className={`rounded-[2px] bg-white ${cell}`}
+                    className={`rounded-xs bg-white ${cell}`}
                     style={{ opacity: LEVEL_OPACITY[level] }}
                   />
                 ))}
@@ -132,7 +132,7 @@ export function ContributionGraph({
           {LEVEL_OPACITY.map((opacity, i) => (
             <span
               key={i}
-              className="inline-block h-[9px] w-[9px] rounded-[2px] bg-white"
+              className="inline-block h-2.25 w-2.25 rounded-xs bg-white"
               style={{ opacity }}
             />
           ))}
@@ -148,8 +148,8 @@ export function RhythmProductPanel() {
   const product = PRODUCT_PREVIEW;
 
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden border border-white/12 bg-white/[0.04]">
-      <div className="border-b border-white/10 bg-white/[0.03] px-4 py-2.5">
+    <div className="relative flex h-full w-full flex-col overflow-hidden border border-white/12 bg-white/4">
+      <div className="border-b border-white/10 bg-white/3 px-4 py-2.5">
         <p className="font-mono text-[11px] font-medium tracking-[0.08em] text-white/70 uppercase">
           {product.live}
         </p>
@@ -177,7 +177,7 @@ export function RhythmProductPanel() {
           ).map((item) => (
             <div
               key={item.label}
-              className="border border-white/12 bg-white/[0.03] px-2 py-2"
+              className="border border-white/12 bg-white/3 px-2 py-2"
             >
               <p className="font-mono text-[9px] tracking-[0.12em] text-white/40 uppercase">
                 {item.label}
