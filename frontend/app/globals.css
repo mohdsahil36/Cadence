@@ -129,6 +129,26 @@
   }
   body {
     @apply bg-background text-foreground text-[15px] leading-relaxed tracking-[-0.011em] antialiased;
+    cursor: default;
+  }
+  a,
+  button,
+  [role="button"],
+  summary,
+  label[for],
+  select,
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="submit"],
+  input[type="button"],
+  input[type="reset"],
+  .cursor-pointer {
+    cursor: pointer;
+  }
+  a:disabled,
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
   }
   h1,
   h2,

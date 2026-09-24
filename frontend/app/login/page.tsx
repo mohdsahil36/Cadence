@@ -1,753 +1,605 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { ArrowRight, X } from "lucide-react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Lenis from "lenis";
+import { Moon, Sun } from "lucide-react";
 import {
   AnimatePresence,
   motion,
   useReducedMotion,
+  useScroll,
+  useTransform,
+  type MotionValue,
+  type Variants,
 } from "motion/react";
-import { CloudShader } from "@/components/ui/cloud-shader";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
-  ContributionGraph,
-  RhythmProductPanel,
-} from "@/components/illustrations/hero-illustrations";
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  BENTO_THEME,
+  BentoVisual,
+  type BentoId,
+} from "@/components/illustrations/bento-visuals";
+import { PixelScenery } from "@/components/illustrations/pixel-scenery";
 import { loginContent } from "./content";
 
-/** Atmospheric chrome — no backdrop-blur (it janks Lenis scroll over WebGL). */
-const chrome = {
-  shell:
-    "rounded-2xl border border-white/12 bg-[#121212]/88 p-2 shadow-[0_30px_90px_rgba(0,0,0,0.5)] ring-1 ring-white/5 sm:p-2.5",
-  cell: "border border-white/12 bg-white/[0.04]",
-  head: "border-b border-white/10 bg-white/[0.03] px-4 py-2.5 sm:px-5",
-  btnPrimary:
-    "border border-white/80 bg-white/95 text-black shadow-[3px_3px_0_rgba(255,255,255,0.14)] transition-[transform,box-shadow,background-color] duration-200 hover:bg-white hover:shadow-[4px_4px_0_rgba(255,255,255,0.18)] active:translate-x-px active:translate-y-px",
-  btnGhost:
-    "border border-white/20 bg-white/[0.04] text-white/65 transition-colors duration-200 hover:border-white/35 hover:text-white",
+const easeOut = [0.22, 1, 0.36, 1] as const;
+
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 18 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.7, ease: easeOut },
+  },
 };
 
+const stagger: Variants = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.1, delayChildren: 0.08 },
+  },
+};
+
+const sectionReveal: Variants = {
+  hidden: { opacity: 0, y: 28 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.75, ease: easeOut },
+  },
+};
+
+const SHELL = "mx-auto w-full max-w-xl px-4 sm:max-w-2xl sm:px-6";
+
+const THEME_KEY = "nocta-theme";
+const themeListeners = new Set<() => void>();
+
+/** Local evening window: 5pm → 7am. */
+function isLocalEvening(date = new Date()) {
+  const h = date.getHours();
+  return h >= 17 || h < 7;
+}
+
+function readDarkPreference(): boolean {
+  const stored = window.localStorage.getItem(THEME_KEY);
+  if (stored === "dark") return true;
+  if (stored === "light") return false;
+  // auto / unset → follow local clock
+  return isLocalEvening();
+}
+
+function subscribeTheme(onStoreChange: () => void) {
+  themeListeners.add(onStoreChange);
+  const mq = window.matchMedia("(prefers-color-scheme: dark)");
+  mq.addEventListener("change", onStoreChange);
+  window.addEventListener("storage", onStoreChange);
+  // Re-check when the clock crosses the evening boundary (every minute)
+  const tick = window.setInterval(onStoreChange, 60_000);
+  return () => {
+    themeListeners.delete(onStoreChange);
+    mq.removeEventListener("change", onStoreChange);
+    window.removeEventListener("storage", onStoreChange);
+    window.clearInterval(tick);
+  };
+}
+
+function writeTheme(next: boolean) {
+  window.localStorage.setItem(THEME_KEY, next ? "dark" : "light");
+  document.documentElement.classList.toggle("dark", next);
+  themeListeners.forEach((listener) => listener());
+}
+
+function useIsDark() {
+  const dark = useSyncExternalStore(
+    subscribeTheme,
+    readDarkPreference,
+    () => false,
+  );
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", dark);
+    document.body.style.backgroundColor = dark ? "#14131a" : "#f3eee6";
+    return () => {
+      document.body.style.backgroundColor = "";
+    };
+  }, [dark]);
+
+  return dark;
+}
+
 export default function LoginPage() {
-  const stepsRef = useRef<HTMLElement>(null);
-  const lenisRef = useRef<Lenis | null>(null);
   const reduceMotion = useReducedMotion();
+  const [scrolled, setScrolled] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const dark = useIsDark();
+  const lenisRef = useRef<Lenis | null>(null);
 
   useEffect(() => {
     if (reduceMotion) return;
 
     const lenis = new Lenis({
-      // lower lerp = slower, more glide
-      lerp: 0.045,
+      lerp: 0.1,
       smoothWheel: true,
+      wheelMultiplier: 0.95,
+      touchMultiplier: 1,
       syncTouch: false,
-      touchMultiplier: 1.5,
-      wheelMultiplier: 0.75,
-      autoRaf: true,
     });
     lenisRef.current = lenis;
 
+    const onScroll = (instance: Lenis) => {
+      const next = instance.scroll > 24;
+      setScrolled((prev) => (prev === next ? prev : next));
+    };
+    lenis.on("scroll", onScroll);
+
+    let raf = 0;
+    const frame = (time: number) => {
+      lenis.raf(time);
+      raf = requestAnimationFrame(frame);
+    };
+    raf = requestAnimationFrame(frame);
+
     return () => {
+      cancelAnimationFrame(raf);
+      lenis.off("scroll", onScroll);
       lenis.destroy();
       lenisRef.current = null;
     };
   }, [reduceMotion]);
 
   useEffect(() => {
+    if (!reduceMotion) return;
+    const onScroll = () => {
+      const next = window.scrollY > 24;
+      setScrolled((prev) => (prev === next ? prev : next));
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [reduceMotion]);
+
+  const toggleTheme = () => writeTheme(!dark);
+
+  const scrollToId = (id: string) => {
+    const el = document.getElementById(id);
+    if (!el) return;
     const lenis = lenisRef.current;
-    if (!lenis) return;
-
-    if (authOpen) {
-      lenis.stop();
-    } else {
-      lenis.start();
-    }
-  }, [authOpen]);
-
-  useEffect(() => {
-    if (!authOpen) return;
-
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setAuthOpen(false);
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.body.style.overflow = previous;
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [authOpen]);
-
-  const openAuth = () => setAuthOpen(true);
-  const closeAuth = () => setAuthOpen(false);
-
-  const scrollToSteps = () => {
-    const target = stepsRef.current;
-    if (!target) return;
-
-    if (lenisRef.current) {
-      lenisRef.current.scrollTo(target, { offset: -24 });
+    if (lenis) {
+      lenis.scrollTo(el, { offset: -88, duration: 1.2 });
       return;
     }
-
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  return (
-    <main className="relative isolate min-h-svh overflow-x-hidden bg-[#0a0a0a] text-white">
-      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-[#0a0a0a]">
-        <div className="absolute inset-x-0 top-[-28%] h-[160%] w-full origin-center">
-          <CloudShader
-            className="absolute inset-0 h-full min-h-full w-full"
-            speed={0.32}
-            count={4}
-            cloudColor="#e8e8e6"
-            skyTopColor="#0a0a0a"
-            skyBottomColor="#1c1c1c"
-          />
-        </div>
-        <div className="absolute inset-0 bg-linear-to-r from-[#0a0a0a]/55 via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-linear-to-b from-[#0a0a0a]/25 via-transparent to-[#0a0a0a]/55" />
-      </div>
+  const openAuth = () => setAuthOpen(true);
 
-      <header className="relative z-20 mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-5 py-5 sm:px-8 lg:px-4">
-        <Brand />
-        <div className="flex items-center gap-2 sm:gap-3">
-          <button
-            type="button"
-            onClick={scrollToSteps}
-            className="hidden px-3 py-2 font-mono text-[11px] tracking-[0.12em] text-white/50 uppercase transition-colors duration-200 hover:text-white sm:inline-flex"
+  return (
+    <div className="relative isolate min-h-svh w-full bg-[#f3eee6] text-foreground dark:bg-[#14131a]">
+      <header className="fixed inset-x-0 top-0 z-40 flex justify-center px-3 pt-3 sm:px-5 sm:pt-4">
+        <motion.div
+          layout
+          transition={{ duration: 0.35, ease: easeOut }}
+          className={[
+            "flex w-full items-center justify-between gap-3 rounded-full border shadow-md backdrop-blur-2xl backdrop-saturate-150 transition-[max-width,padding,background-color,border-color,color] duration-300 ease-out",
+            // Over hero: light glass + white type. Over content: theme glass + readable type.
+            scrolled
+              ? "max-w-3xl border-border/50 bg-background/80 py-3 pr-3 pl-5 text-foreground sm:max-w-4xl sm:py-3.5 sm:pr-3.5 sm:pl-6 dark:border-white/12 dark:bg-background/75"
+              : "max-w-2xl border-white/30 bg-white/25 py-3 pr-3 pl-5 text-white sm:max-w-3xl sm:py-3.5 dark:border-white/15 dark:bg-white/10",
+          ].join(" ")}
+        >
+          <a
+            href="#top"
+            className={[
+              "cursor-pointer font-serif text-lg tracking-[-0.03em] transition-colors duration-300 sm:text-xl",
+              scrolled ? "text-foreground" : "text-white",
+            ].join(" ")}
           >
-            {loginContent.nav.howItWorks}
-          </button>
-          <button
-            type="button"
-            onClick={openAuth}
-            className="border border-white/70 bg-white/90 px-4 py-2 font-mono text-[11px] font-medium tracking-[0.08em] text-black uppercase shadow-[3px_3px_0_rgba(255,255,255,0.12)] transition-[transform,box-shadow,background-color] duration-200 hover:bg-white hover:shadow-[4px_4px_0_rgba(255,255,255,0.16)] active:translate-x-px active:translate-y-px"
-          >
-            {loginContent.nav.signIn}
-          </button>
-        </div>
+            {loginContent.brand}
+          </a>
+          <nav className="flex items-center gap-0.5 sm:gap-1.5">
+            <Button
+              variant="ghost"
+              size="default"
+              className={[
+                "hidden cursor-pointer sm:inline-flex",
+                scrolled
+                  ? "text-foreground/75 hover:bg-foreground/5 hover:text-foreground"
+                  : "text-white/85 hover:bg-white/15 hover:text-white",
+              ].join(" ")}
+              onClick={() => scrollToId("how-it-works")}
+            >
+              {loginContent.nav.howItWorks}
+            </Button>
+            <Button
+              variant="ghost"
+              size="default"
+              className={[
+                "hidden cursor-pointer md:inline-flex",
+                scrolled
+                  ? "text-foreground/75 hover:bg-foreground/5 hover:text-foreground"
+                  : "text-white/85 hover:bg-white/15 hover:text-white",
+              ].join(" ")}
+              onClick={() => scrollToId("close")}
+            >
+              {loginContent.nav.about}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={[
+                "cursor-pointer",
+                scrolled
+                  ? "text-foreground hover:bg-foreground/5 hover:text-foreground"
+                  : "text-white hover:bg-white/15 hover:text-white",
+              ].join(" ")}
+              onClick={toggleTheme}
+              aria-label={
+                dark ? "Switch to daytime look" : "Switch to evening look"
+              }
+              title={dark ? "Daytime (override)" : "Evening (override)"}
+            >
+              {dark ? <Sun /> : <Moon />}
+            </Button>
+            <Button
+              size="default"
+              className={[
+                "cursor-pointer rounded-full px-4 sm:px-5",
+                scrolled
+                  ? ""
+                  : "bg-white text-zinc-900 hover:bg-white/90",
+              ].join(" ")}
+              onClick={openAuth}
+            >
+              {loginContent.nav.cta}
+            </Button>
+          </nav>
+        </motion.div>
       </header>
 
-      <section className="relative z-10 mx-auto w-full max-w-5xl px-5 pb-16 pt-2 sm:px-8 lg:px-4">
-        <div className={chrome.shell}>
-          <div className="grid grid-cols-1 gap-2 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className={`flex min-h-105 flex-col ${chrome.cell}`}>
-              <div className={chrome.head}>
-                <p className="inline-flex items-center gap-2 font-mono text-[11px] font-medium tracking-[0.08em] text-white/70 uppercase">
-                  <span className="h-1.5 w-1.5 rounded-full bg-white/80" />
-                  {loginContent.hero.badge}
-                </p>
-              </div>
-
-              <div className="flex flex-1 flex-col p-5 sm:p-7">
-                <p className="font-serif text-3xl tracking-[-0.04em] text-white sm:text-4xl">
-                  {loginContent.brand}
-                </p>
-
-                <h1 className="mt-4 font-serif text-[2.35rem] leading-[0.98] tracking-[-0.045em] text-white sm:text-[2.85rem] xl:text-[3.15rem]">
-                  <span className="block text-white/55">
-                    {loginContent.hero.titleLead}
-                  </span>
-                  <span className="relative mt-1 inline-block">
-                    <span className="relative z-10 italic text-white">
-                      {loginContent.hero.titleAccent}
-                    </span>
-                    <span
-                      aria-hidden
-                      className="absolute inset-x-[-0.06em] bottom-[0.06em] z-0 h-[0.38em] bg-white/15"
-                    />
-                  </span>
-                </h1>
-
-                <p className="mt-5 max-w-md text-[15px] leading-6 text-white/65">
-                  {loginContent.hero.body}
-                </p>
-                <p className="mt-3 max-w-md font-mono text-[12px] leading-5 tracking-[0.02em] text-white/40">
-                  {loginContent.hero.cursive}
-                </p>
-
-                <div className="mt-8 flex w-full max-w-sm flex-col gap-2.5">
-                  <button
-                    type="button"
-                    onClick={openAuth}
-                    className={`relative flex h-11 w-full items-center justify-center ${chrome.btnPrimary}`}
-                  >
-                    <GitHubIcon className="absolute left-3.5 text-black" />
-                    <span className="font-mono text-[12px] tracking-[0.04em]">
-                      {loginContent.hero.primaryCta}
-                    </span>
-                    <span className="absolute right-2.5 flex h-6 w-6 items-center justify-center border border-black/15 bg-black/5">
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={scrollToSteps}
-                    className={`inline-flex h-10 w-full items-center justify-center gap-2 px-4 font-mono text-[11px] tracking-[0.08em] uppercase ${chrome.btnGhost}`}
-                  >
-                    {loginContent.hero.secondaryCta}
-                    <ArrowRight className="h-3.5 w-3.5 opacity-60" />
-                  </button>
-                </div>
-
-                <div className="mt-auto flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-white/10 pt-5 font-mono text-[10px] tracking-[0.08em] text-white/40 uppercase">
-                  {loginContent.hero.trust.map((item, index) => (
-                    <span key={item} className="inline-flex items-center gap-3">
-                      {index > 0 ? (
-                        <span aria-hidden className="text-white/20">
-                          ·
-                        </span>
-                      ) : null}
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="min-h-105">
-              <RhythmProductPanel />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section
-        ref={stepsRef}
-        id="how-it-works"
-        className="relative z-10 overflow-hidden px-5 py-16 sm:px-8 lg:px-4"
-      >
-        <StepsBento />
-      </section>
-
-      <section className="relative z-10 px-5 pb-24 sm:px-8 lg:px-4">
-        <div className="relative mx-auto max-w-5xl">
-          <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-            <BentoAtmosphere reduceMotion={!!reduceMotion} />
-          </div>
-          <div className={`relative z-10 ${chrome.shell}`}>
-            <div
-              className={`flex flex-col items-center px-6 py-12 text-center sm:px-10 sm:py-14 ${chrome.cell}`}
-            >
-              <p className="mb-3 font-mono text-[11px] tracking-[0.14em] text-white/40 uppercase">
-                {loginContent.close.eyebrow}
-              </p>
-              <h2 className="font-serif text-3xl tracking-[-0.04em] text-white sm:text-4xl">
-                {loginContent.close.title}
-              </h2>
-              <p className="mt-3 font-mono text-[12px] tracking-[0.04em] text-white/45">
-                {loginContent.close.cursive}
-              </p>
-              <button
-                type="button"
-                onClick={openAuth}
-                className={`group mt-8 inline-flex h-11 items-center gap-3 px-5 text-sm font-medium ${chrome.btnPrimary}`}
-              >
-                <span className="font-mono text-[12px] tracking-[0.04em]">
-                  {loginContent.close.cta}
-                </span>
-                <span className="flex h-6 w-6 items-center justify-center border border-black/15 bg-black/5 transition-transform duration-200 group-hover:translate-x-0.5">
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <AuthOverlay open={authOpen} onClose={closeAuth} />
-    </main>
-  );
-}
-
-function AuthOverlay({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
-  const titleId = useId();
-  const reduceMotion = useReducedMotion();
-
-  return (
-    <AnimatePresence>
-      {open ? (
-        <motion.div
-          className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+      <main className="relative z-10 w-full">
+        <section
+          id="top"
+          className="relative flex min-h-svh w-full items-center justify-center overflow-hidden"
         >
-          <button
-            type="button"
-            aria-label="Dismiss sign in"
-            className="absolute inset-0 bg-black/55"
-            onClick={onClose}
-          />
+          <PixelScenery className="inset-0" />
 
           <motion.div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId}
-            initial={reduceMotion ? { opacity: 1 } : { opacity: 0, y: 28 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 16 }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className={`relative z-10 w-full max-w-md overflow-hidden rounded-t-2xl sm:rounded-2xl ${chrome.shell}`}
+            className="relative z-10 flex w-full flex-col items-center px-4 pt-28 pb-16"
+            variants={stagger}
+            initial={reduceMotion ? false : "hidden"}
+            animate="show"
           >
-            <div className={`p-6 sm:p-7 ${chrome.cell}`}>
-              <div className="mb-6 flex items-start justify-between gap-4">
-                <Brand />
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="flex h-8 w-8 items-center justify-center border border-white/20 text-white/60 transition-colors duration-200 hover:border-white/40 hover:text-white"
-                  aria-label={loginContent.auth.close}
+            <div className={`${SHELL} flex flex-col items-center text-center`}>
+              {/* 1. Brand + title as one line */}
+              <motion.h1
+                variants={fadeUp}
+                className="font-serif text-4xl leading-tight tracking-[-0.04em] text-white drop-shadow-[0_2px_18px_rgba(0,0,0,0.45)] sm:text-5xl lg:text-6xl"
+              >
+                <span className="whitespace-nowrap">{loginContent.hero.wordmark}</span>
+                <span className="mx-2 font-normal text-white/45 sm:mx-3">—</span>
+                <span className="text-white/90">{loginContent.hero.title}</span>
+              </motion.h1>
+
+              {/* 2. Tagline */}
+              <motion.p
+                variants={fadeUp}
+                className="mx-auto mt-4 max-w-md text-base font-medium leading-snug text-white/95 drop-shadow-[0_1px_10px_rgba(0,0,0,0.4)] sm:mt-5 sm:max-w-lg sm:text-lg"
+              >
+                {loginContent.hero.tagline}
+              </motion.p>
+
+              {/* 3. Dynamic line */}
+              <motion.div
+                variants={fadeUp}
+                className="mx-auto mt-3 w-full max-w-lg"
+              >
+                <DynamicLine lines={loginContent.hero.rotating} />
+              </motion.div>
+
+              {/* 4. Description */}
+              <motion.p
+                variants={fadeUp}
+                className="mx-auto mt-3 max-w-sm text-sm leading-6 text-white/75 drop-shadow-[0_1px_8px_rgba(0,0,0,0.35)] sm:max-w-md sm:text-[0.95rem]"
+              >
+                {loginContent.hero.body}
+              </motion.p>
+
+              <motion.div
+                variants={fadeUp}
+                className="mt-8 flex flex-wrap items-center justify-center gap-3 sm:mt-9"
+              >
+                <Button
+                  size="lg"
+                  className="h-12 min-w-40 cursor-pointer rounded-full bg-white px-7 text-sm font-semibold text-zinc-900 shadow-[0_8px_28px_rgba(0,0,0,0.28)] transition-[transform,box-shadow,background-color] duration-200 hover:bg-white hover:shadow-[0_10px_32px_rgba(0,0,0,0.35)] hover:brightness-105 active:scale-[0.98]"
+                  onClick={openAuth}
                 >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              <p className="mb-2 font-mono text-[11px] tracking-[0.14em] text-white/40 uppercase">
-                {loginContent.auth.eyebrow}
-              </p>
-              <h2
-                id={titleId}
-                className="font-serif text-[2rem] leading-[1.05] tracking-[-0.04em] text-white sm:text-[2.25rem]"
-              >
-                {loginContent.auth.title}
-                <br />
-                <span className="italic text-white/45">
-                  {loginContent.auth.titleAccent}
-                </span>
-              </h2>
-              <p className="mt-3 text-sm leading-6 text-white/55">
-                {loginContent.auth.body}
-              </p>
-
-              <button
-                type="button"
-                className={`relative mt-7 flex h-11 w-full items-center justify-center text-sm font-medium ${chrome.btnPrimary}`}
-              >
-                <GitHubIcon className="absolute left-3.5 text-black" />
-                <span className="font-mono text-[12px] tracking-[0.04em]">
-                  {loginContent.auth.cta}
-                </span>
-                <span className="absolute right-2.5 flex h-6 w-6 items-center justify-center border border-black/15 bg-black/5">
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </span>
-              </button>
-
-              <div className="my-5 flex items-center gap-3">
-                <div className="h-px flex-1 bg-white/10" />
-                <span className="font-mono text-[10px] tracking-[0.14em] text-white/35 uppercase">
-                  {loginContent.auth.divider}
-                </span>
-                <div className="h-px flex-1 bg-white/10" />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                {loginContent.auth.chips.map((chip) => (
-                  <InfoChip
-                    key={chip.label}
-                    label={chip.label}
-                    value={chip.value}
-                  />
-                ))}
-              </div>
-
-              <p className="mt-5 font-mono text-[10px] leading-5 tracking-[0.02em] text-white/35">
-                {loginContent.auth.privacy}
-              </p>
+                  {loginContent.hero.primaryCta}
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="h-12 min-w-40 cursor-pointer rounded-full border-white/50 bg-white/10 px-7 text-sm font-semibold text-white shadow-[0_4px_20px_rgba(0,0,0,0.18)] backdrop-blur-md transition-[transform,background-color,border-color] duration-200 hover:border-white/70 hover:bg-white/20 hover:text-white active:scale-[0.98]"
+                  onClick={() => scrollToId("how-it-works")}
+                >
+                  {loginContent.hero.secondaryCta}
+                </Button>
+              </motion.div>
             </div>
           </motion.div>
-        </motion.div>
-      ) : null}
-    </AnimatePresence>
-  );
-}
+        </section>
 
-const bento = loginContent.steps.bento;
+        <WhyBuiltSection />
 
-function StepsBento() {
-  const reduceMotion = useReducedMotion();
-
-  return (
-    <div className="relative mx-auto max-w-5xl">
-      <div className="mb-10 text-center">
-        <p className="mb-3 font-mono text-[11px] tracking-[0.14em] text-white/40 uppercase">
-          {loginContent.steps.eyebrow}
-        </p>
-        <h2 className="font-serif text-3xl tracking-[-0.04em] text-white sm:text-4xl">
-          {loginContent.steps.title}
-        </h2>
-        <p className="mx-auto mt-3 max-w-md font-mono text-[12px] tracking-[0.04em] text-white/45">
-          {loginContent.steps.cursive}
-        </p>
-      </div>
-
-      <div className="pointer-events-none absolute inset-x-0 top-24 bottom-0 z-0 overflow-hidden">
-        <BentoAtmosphere reduceMotion={!!reduceMotion} />
-      </div>
-
-      <div className={`relative z-10 ${chrome.shell}`}>
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-3 md:grid-rows-[auto_auto]">
-          <BentoCell className="md:row-span-2" delay={0}>
-            <BentoHead>{bento.connect.title}</BentoHead>
-            <div className="flex flex-1 flex-col gap-4 p-4 sm:p-5">
-              <p className="text-[13px] leading-5 text-white/60">
-                {bento.connect.body}
-              </p>
-              <ConnectPanels />
-            </div>
-          </BentoCell>
-
-          <BentoCell delay={0.05}>
-            <BentoHead>{bento.select.title}</BentoHead>
-            <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
-              <p className="text-[13px] leading-5 text-white/60">
-                {bento.select.body}
-              </p>
-              <ul className="space-y-1 text-[12px] text-white/75">
-                {bento.select.features.map((f) => (
-                  <li key={f} className="flex items-center gap-2">
-                    <span className="h-1 w-1 rounded-full bg-white/70" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-auto flex justify-center pt-2">
-                <SelectPlanes />
-              </div>
-            </div>
-          </BentoCell>
-
-          <BentoCell delay={0.08}>
-            <BentoHead>{bento.scoped.title}</BentoHead>
-            <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
-              <p className="text-[13px] leading-5 text-white/60">
-                {bento.scoped.body}
-              </p>
-              <div className="mt-auto flex justify-center pb-1">
-                <ScopedPuzzle pieces={[...bento.scoped.pieces]} />
-              </div>
-            </div>
-          </BentoCell>
-
-          <BentoCell className="md:col-span-2" delay={0.12}>
-            <BentoHead>{bento.discover.title}</BentoHead>
-            <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
-              <div className="flex flex-wrap items-end justify-between gap-3">
-                <p className="max-w-md text-[13px] leading-5 text-white/60">
-                  {bento.discover.body}
-                </p>
-                <p className="font-mono text-[10px] tracking-[0.08em] text-white/35 uppercase">
-                  {bento.private.badge} · {bento.private.title}
-                </p>
-              </div>
-              <div className="mt-auto rounded-sm border border-white/10 bg-black/30 p-3 sm:p-4">
-                <ContributionGraph compact />
-              </div>
-            </div>
-          </BentoCell>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function BentoHead({ children }: { children: ReactNode }) {
-  return (
-    <div className={chrome.head}>
-      <p className="font-mono text-[11px] font-medium tracking-[0.08em] text-white/70 uppercase">
-        {children}
-      </p>
-    </div>
-  );
-}
-
-function BentoCell({
-  children,
-  className = "",
-  delay = 0,
-}: {
-  children: ReactNode;
-  className?: string;
-  delay?: number;
-}) {
-  const reduceMotion = useReducedMotion();
-
-  return (
-    <motion.article
-      className={`group flex min-h-60 flex-col overflow-hidden transition-[border-color,background-color] duration-200 ease-out hover:border-white/25 hover:bg-white/[0.07] ${chrome.cell} ${className}`}
-      initial={reduceMotion ? false : { opacity: 0, y: 12 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{
-        duration: 0.4,
-        delay,
-        ease: [0.22, 1, 0.36, 1],
-      }}
-    >
-      {children}
-    </motion.article>
-  );
-}
-
-function BentoAtmosphere({ reduceMotion }: { reduceMotion: boolean }) {
-  return (
-    <div className="absolute inset-0">
-      <div
-        className={`absolute inset-0 opacity-[0.12] ${reduceMotion ? "" : "cadence-grid-drift"}`}
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.35) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.35) 1px, transparent 1px)",
-          backgroundSize: "28px 28px",
-          animation: reduceMotion
-            ? undefined
-            : "cadence-grid-drift 22s linear infinite",
-        }}
-      />
-      <div
-        className="absolute -left-10 top-10 h-56 w-56 rounded-full bg-white/15 blur-3xl"
-        style={{
-          animation: reduceMotion
-            ? undefined
-            : "cadence-orb 14s ease-in-out infinite",
-        }}
-      />
-      <div
-        className="absolute -right-8 bottom-8 h-64 w-64 rounded-full bg-white/10 blur-3xl"
-        style={{
-          animation: reduceMotion
-            ? undefined
-            : "cadence-orb 18s ease-in-out infinite reverse",
-        }}
-      />
-      <div
-        className="absolute bottom-6 left-0 flex gap-8 font-mono text-[10px] tracking-[0.2em] text-white/20 uppercase whitespace-nowrap"
-        style={{
-          animation: reduceMotion
-            ? undefined
-            : "cadence-ticker 16s linear infinite",
-        }}
-      >
-        {[
-          "a3f91c2",
-          "quiet·1–5am",
-          "12·day·streak",
-          "47·commits",
-          "scoped·oauth",
-          "a3f91c2",
-          "quiet·1–5am",
-          "12·day·streak",
-        ].map((t, i) => (
-          <span key={`${t}-${i}`}>{t}</span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function Stipple({ className = "" }: { className?: string }) {
-  return (
-    <div
-      className={`pointer-events-none absolute inset-0 opacity-[0.25] ${className}`}
-      style={{
-        backgroundImage:
-          "radial-gradient(circle, rgba(255,255,255,0.7) 0.55px, transparent 0.6px)",
-        backgroundSize: "3.5px 3.5px",
-      }}
-    />
-  );
-}
-
-function ConnectPanels() {
-  const reduceMotion = useReducedMotion();
-  const { terminal, snippet } = bento.connect;
-
-  return (
-    <div className="mt-auto space-y-3">
-      <div className="relative overflow-hidden border border-white/20 bg-black/30 p-3 shadow-[3px_3px_0_rgba(255,255,255,0.08)]">
-        <p className="font-mono text-[11px] text-white/80">{terminal}</p>
-        <div className="mt-2 h-1.5 overflow-hidden border border-white/15 bg-white/5">
-          <motion.div
-            className="h-full bg-white/70 will-change-[width]"
-            initial={{ width: "22%" }}
-            animate={
-              reduceMotion ? { width: "72%" } : { width: ["22%", "78%", "55%"] }
-            }
-            transition={
-              reduceMotion
-                ? undefined
-                : { duration: 5.5, repeat: Infinity, ease: "easeInOut" }
-            }
-          />
-        </div>
-      </div>
-      <div className="relative border border-white/20 bg-black/35 p-3 shadow-[4px_4px_0_rgba(255,255,255,0.08)]">
-        <Stipple />
-        <div className="relative space-y-1 font-mono text-[11px] leading-5 text-white/75">
-          {snippet.map((line) => (
-            <p key={line}>{line}</p>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SelectPlanes() {
-  const reduceMotion = useReducedMotion();
-
-  return (
-    <svg
-      viewBox="0 0 180 110"
-      className="h-22 w-full max-w-50"
-      aria-hidden
-    >
-      <defs>
-        <pattern
-          id="stipple-planes"
-          width="3"
-          height="3"
-          patternUnits="userSpaceOnUse"
+        <motion.section
+          id="how-it-works"
+          className="relative z-10 bg-[#f3eee6] py-16 sm:py-24 dark:bg-[#14131a]"
+          variants={sectionReveal}
+          initial={reduceMotion ? false : "hidden"}
+          whileInView="show"
+          viewport={{ once: true, amount: 0.15 }}
         >
-          <circle cx="0.6" cy="0.6" r="0.55" fill="#fff" />
-        </pattern>
-      </defs>
-      {[0, 1, 2].map((i) => {
-        const y = 18 + i * 22;
-        return (
-          <motion.g
-            key={i}
-            animate={reduceMotion ? undefined : { y: [0, -1.5, 0] }}
-            transition={{
-              duration: 5 + i * 0.5,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: i * 0.35,
-            }}
-          >
-            <path
-              d={`M20 ${y + 28} L90 ${y} L160 ${y + 28} L90 ${y + 56} Z`}
-              fill="url(#stipple-planes)"
-              fillOpacity={0.12 + i * 0.08}
-              stroke="rgba(255,255,255,0.55)"
-              strokeWidth="1.2"
-            />
-          </motion.g>
-        );
-      })}
-      <circle
-        cx="78"
-        cy="42"
-        r="3.5"
-        fill="#fff"
-        stroke="rgba(255,255,255,0.8)"
-        strokeWidth="1"
-      />
-      <circle
-        cx="112"
-        cy="58"
-        r="3.5"
-        fill="rgba(255,255,255,0.45)"
-        stroke="rgba(255,255,255,0.8)"
-        strokeWidth="1"
-      />
-      <path
-        d="M78 42 L112 58"
-        stroke="rgba(255,255,255,0.5)"
-        strokeWidth="1"
-        fill="none"
-      />
-    </svg>
+          <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:max-w-7xl">
+            <motion.h2
+              className="text-center font-serif text-3xl tracking-[-0.03em] text-foreground sm:text-4xl"
+              variants={fadeUp}
+              initial={reduceMotion ? false : "hidden"}
+              whileInView="show"
+              viewport={{ once: true }}
+            >
+              {loginContent.features.title}
+            </motion.h2>
+            <motion.div
+              className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:grid-rows-[auto_auto]"
+              variants={stagger}
+              initial={reduceMotion ? false : "hidden"}
+              whileInView="show"
+              viewport={{ once: true, amount: 0.1 }}
+            >
+              {loginContent.features.items.map((feature, index) => (
+                <FeatureCell
+                  key={feature.id}
+                  feature={feature}
+                  index={index}
+                />
+              ))}
+            </motion.div>
+          </div>
+        </motion.section>
+
+        <motion.section
+          id="close"
+          className="relative z-10 bg-[#f3eee6] py-20 sm:py-28 dark:bg-[#14131a]"
+          variants={sectionReveal}
+          initial={reduceMotion ? false : "hidden"}
+          whileInView="show"
+          viewport={{ once: true, amount: 0.3 }}
+        >
+          <div className={`${SHELL} text-center`}>
+            <motion.h2
+              variants={fadeUp}
+              className="font-serif text-3xl tracking-[-0.03em] text-foreground sm:text-4xl"
+            >
+              {loginContent.close.title}
+            </motion.h2>
+            <motion.p
+              variants={fadeUp}
+              className="mx-auto mt-5 max-w-md text-base leading-7 text-muted-foreground"
+            >
+              {loginContent.close.body}
+            </motion.p>
+            <motion.div variants={fadeUp}>
+              <Button
+                size="lg"
+                className="mt-9 h-11 min-w-36 cursor-pointer rounded-full px-6"
+                onClick={openAuth}
+              >
+                {loginContent.close.cta}
+              </Button>
+            </motion.div>
+            <motion.p
+              variants={fadeUp}
+              className="mt-7 text-xs text-muted-foreground/80"
+            >
+              {loginContent.close.trust}
+            </motion.p>
+          </div>
+        </motion.section>
+      </main>
+
+      <Dialog open={authOpen} onOpenChange={setAuthOpen}>
+        <DialogContent className="gap-5 p-6 sm:max-w-md">
+          <DialogHeader>
+            <p className="font-serif text-lg tracking-[-0.02em] text-foreground">
+              {loginContent.brand}
+            </p>
+            <DialogTitle className="font-serif text-2xl font-normal tracking-[-0.03em]">
+              {loginContent.auth.title}
+            </DialogTitle>
+            <DialogDescription className="text-sm leading-6">
+              {loginContent.auth.body}
+            </DialogDescription>
+          </DialogHeader>
+          {/* deferred to v2: real auth + session */}
+          <DialogClose render={<Button className="w-full cursor-pointer" size="lg" />}>
+            {loginContent.auth.cta}
+          </DialogClose>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 
-function ScopedPuzzle({ pieces }: { pieces: string[] }) {
-  const slots = [
-    { x: 8, y: 8 },
-    { x: 58, y: 8 },
-    { x: 8, y: 52 },
-    { x: 58, y: 52 },
+function WhyBuiltSection() {
+  const reduceMotion = useReducedMotion();
+  const ref = useRef<HTMLElement | null>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    // Light up while the block is still clearly on screen
+    offset: ["start 0.8", "start 0.25"],
+  });
+
+  const before = loginContent.why.before.split(" ");
+  const emphasis = loginContent.why.emphasis.split(" ");
+  const after = loginContent.why.after.split(" ");
+  const all = [
+    ...before.map((w) => ({ w, kind: "plain" as const })),
+    ...emphasis.map((w) => ({ w, kind: "emphasis" as const })),
+    ...after.map((w) => ({ w, kind: "plain" as const })),
   ];
 
   return (
-    <div className="relative h-25 w-30">
-      {pieces.map((piece, i) => (
-        <div
-          key={piece}
-          className="absolute flex h-10 w-10 items-center justify-center border border-white/25 bg-black/40 font-mono text-[8px] tracking-wide text-white/80 uppercase shadow-[2px_2px_0_rgba(255,255,255,0.08)] transition-transform duration-300 ease-out group-hover:-translate-y-px"
-          style={{
-            left: slots[i]?.x,
-            top: slots[i]?.y,
-            transitionDelay: `${i * 40}ms`,
-          }}
-        >
-          {i === 3 ? <Stipple /> : null}
-          <span className="relative">{piece}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function Brand({ compact = false }: { compact?: boolean }) {
-  return (
-    <div className="flex items-center gap-3">
-      <div
-        className={`flex items-center justify-center border border-white/70 bg-white/90 text-black shadow-[2px_2px_0_rgba(255,255,255,0.12)] ${
-          compact ? "h-8 w-8" : "h-9 w-9"
-        }`}
-      >
-        <span
-          className={`font-mono font-semibold ${
-            compact ? "text-xs" : "text-sm"
-          }`}
-        >
-          C
-        </span>
-      </div>
-      <span
-        className={`font-mono tracking-[0.04em] text-white uppercase ${
-          compact ? "text-xs" : "text-[13px]"
-        }`}
-      >
-        {loginContent.brand}
-      </span>
-    </div>
-  );
-}
-
-function InfoChip({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex min-h-16 flex-col border border-white/15 bg-white/4 px-3 py-2.5">
-      <p className="font-mono text-[9px] tracking-[0.12em] text-white/40 uppercase">
-        {label}
-      </p>
-      <p className="mt-auto pt-1 text-[13px] font-medium tracking-[-0.02em] text-white/85">
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function GitHubIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className={`h-4 w-4 fill-current ${className ?? ""}`}
+    <section
+      id="why"
+      ref={ref}
+      className="relative z-10 bg-[#f3eee6] px-4 py-16 sm:px-6 sm:py-20 dark:bg-[#14131a]"
     >
-      <path d="M12 2C6.477 2 2 6.477 2 12c0 4.419 2.865 8.167 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.866-.013-1.7-2.782.604-3.369-1.341-3.369-1.341-.455-1.157-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.004.071 1.532 1.03 1.532 1.03.892 1.529 2.341 1.087 2.91.831.091-.646.35-1.087.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0 1 12 6.844a9.56 9.56 0 0 1 2.504.337c1.909-1.294 2.748-1.025 2.748-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.744 0 .267.18.578.688.48C19.138 20.164 22 16.417 22 12 22 6.477 17.523 2 12 2Z" />
-    </svg>
+      <div className="mx-auto w-full max-w-2xl text-center">
+        <p className="mb-5 text-xs font-medium tracking-[0.16em] text-muted-foreground uppercase">
+          {loginContent.why.eyebrow}
+        </p>
+        <p className="text-xl leading-relaxed text-balance sm:text-2xl sm:leading-relaxed lg:text-3xl lg:leading-snug">
+          {all.map((item, i) => {
+            const start = i / all.length;
+            const end = Math.min(1, start + 1.35 / all.length);
+            return (
+              <ScrollWord
+                key={`${item.kind}-${item.w}-${i}`}
+                progress={scrollYProgress}
+                range={[start, end]}
+                reduceMotion={!!reduceMotion}
+                emphasis={item.kind === "emphasis"}
+              >
+                {item.w}
+              </ScrollWord>
+            );
+          })}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function ScrollWord({
+  children,
+  progress,
+  range,
+  reduceMotion,
+  emphasis,
+}: {
+  children: string;
+  progress: MotionValue<number>;
+  range: [number, number];
+  reduceMotion: boolean;
+  emphasis?: boolean;
+}) {
+  const opacity = useTransform(
+    progress,
+    range,
+    reduceMotion ? [1, 1] : [0.2, 1],
+  );
+
+  return (
+    <motion.span
+      style={{ opacity }}
+      className={
+        emphasis
+          ? "mr-[0.28em] inline-block font-serif text-foreground italic"
+          : "mr-[0.28em] inline-block font-sans text-foreground"
+      }
+    >
+      {children}
+    </motion.span>
+  );
+}
+
+function DynamicLine({ lines }: { lines: readonly string[] }) {
+  const reduceMotion = useReducedMotion();
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (reduceMotion || lines.length < 2) return;
+    const id = window.setInterval(() => {
+      setIndex((i) => (i + 1) % lines.length);
+    }, 3400);
+    return () => window.clearInterval(id);
+  }, [lines, reduceMotion]);
+
+  const text = lines[index] ?? lines[0];
+
+  return (
+    <div className="relative mx-auto flex min-h-10 items-center justify-center overflow-hidden sm:min-h-11">
+      <AnimatePresence mode="wait">
+        <motion.p
+          key={text}
+          initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={reduceMotion ? undefined : { opacity: 0, y: -6 }}
+          transition={{ duration: 0.4, ease: easeOut }}
+          className="absolute inset-x-0 px-2 text-center font-serif text-base leading-snug tracking-[-0.02em] text-white/90 italic drop-shadow-[0_2px_14px_rgba(0,0,0,0.65)] sm:text-lg"
+        >
+          {text}
+        </motion.p>
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function FeatureCell({
+  feature,
+  index,
+}: {
+  feature: (typeof loginContent.features.items)[number];
+  index: number;
+}) {
+  const theme = BENTO_THEME[feature.id as BentoId] ?? BENTO_THEME.scoring;
+  const isWide = feature.span === "two-thirds";
+  const span = isWide ? "lg:col-span-2" : "lg:col-span-1";
+
+  return (
+    <motion.div className={span} variants={fadeUp} custom={index}>
+      <Card
+        className={`group flex h-full min-h-64 cursor-default flex-col gap-0 overflow-hidden rounded-3xl border-0 py-0 shadow-none ring-0 transition-shadow duration-150 ease-out hover:shadow-md sm:min-h-72 ${theme.card}`}
+      >
+        {isWide ? (
+          <div className="flex h-full min-h-72 flex-col gap-4 p-6 sm:flex-row sm:items-stretch sm:gap-6 sm:p-8">
+            <div className="flex w-full shrink-0 flex-col justify-center gap-2.5 sm:w-[34%] sm:max-w-xs">
+              <h3
+                className={`text-xl font-semibold tracking-tight sm:text-2xl ${theme.title}`}
+              >
+                {feature.title}
+              </h3>
+              <p className={`text-sm leading-6 ${theme.muted}`}>
+                {feature.description}
+              </p>
+            </div>
+            <div className="min-h-48 flex-1 sm:min-h-0">
+              <BentoVisual id={feature.id} wide />
+            </div>
+          </div>
+        ) : (
+          <div className="flex h-full flex-col p-6 sm:p-7">
+            <div className="mb-4 min-h-32 flex-1 sm:min-h-36">
+              <BentoVisual id={feature.id} />
+            </div>
+            <h3
+              className={`text-lg font-semibold tracking-tight sm:text-xl ${theme.title}`}
+            >
+              {feature.title}
+            </h3>
+            <p className={`mt-2 text-sm leading-6 ${theme.muted}`}>
+              {feature.description}
+            </p>
+          </div>
+        )}
+      </Card>
+    </motion.div>
   );
 }
