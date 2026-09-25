@@ -9,30 +9,35 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { cn } from "cn";
 
-/** Shared glass surfaces that sit on the dusk page, not loud pastel blocks. */
+/**
+ * Outer bento shell class lives in globals.css (`.nocta-bento-card`) so the
+ * fill isn't fought by Card's `bg-card` / Tailwind cascade.
+ */
+const bentoCard = "nocta-bento-card";
+
 export const BENTO_THEME = {
   scoring: {
-    card: "bg-white/55 ring-1 ring-white/40 dark:bg-white/5 dark:ring-white/10 backdrop-blur-md",
+    card: bentoCard,
     title: "text-foreground",
     muted: "text-muted-foreground",
   },
   "one-action": {
-    card: "bg-white/55 ring-1 ring-white/40 dark:bg-white/5 dark:ring-white/10 backdrop-blur-md",
+    card: bentoCard,
     title: "text-foreground",
     muted: "text-muted-foreground",
   },
   reflection: {
-    card: "bg-white/55 ring-1 ring-white/40 dark:bg-white/5 dark:ring-white/10 backdrop-blur-md",
+    card: bentoCard,
     title: "text-foreground",
     muted: "text-muted-foreground",
   },
   recovery: {
-    card: "bg-white/55 ring-1 ring-white/40 dark:bg-white/5 dark:ring-white/10 backdrop-blur-md",
+    card: bentoCard,
     title: "text-foreground",
     muted: "text-muted-foreground",
   },
   neglected: {
-    card: "bg-white/55 ring-1 ring-white/40 dark:bg-white/5 dark:ring-white/10 backdrop-blur-md",
+    card: bentoCard,
     title: "text-foreground",
     muted: "text-muted-foreground",
   },
@@ -138,7 +143,7 @@ export function OneActionVisual({ className, wide }: VisualProps) {
     if (reduce) return;
     const id = window.setInterval(() => {
       setIndex((v) => (v + 1) % cards.length);
-    }, 2800);
+    }, 3200);
     return () => window.clearInterval(id);
   }, [reduce, cards.length]);
 
@@ -169,42 +174,52 @@ export function OneActionVisual({ className, wide }: VisualProps) {
                 // Opaque shells so stacked cards don't ghost through in dark mode
                 isFront
                   ? "border-border/40 bg-card text-card-foreground dark:border-white/12 dark:bg-zinc-900"
-                  : "border-border/25 bg-muted dark:border-white/8 dark:bg-zinc-800/90",
+                  : "border-border/25 bg-muted dark:border-white/8 dark:bg-zinc-800",
               )}
+              initial={false}
               animate={{
-                y: offset * (wide ? 14 : 10),
-                scale: 1 - offset * 0.05,
+                y: offset * (wide ? 16 : 12),
+                x: offset * (wide ? 10 : 6),
+                scale: 1 - offset * 0.06,
+                rotate: offset * 1.4,
                 zIndex: cards.length - offset,
-                opacity: isVisible ? (isFront ? 1 : 0.55 - offset * 0.12) : 0,
+                opacity: isVisible ? (isFront ? 1 : 0.72 - offset * 0.14) : 0,
               }}
-              transition={{ type: "spring", stiffness: 260, damping: 26 }}
+              transition={
+                reduce
+                  ? { duration: 0 }
+                  : { type: "spring", stiffness: 220, damping: 24, mass: 0.9 }
+              }
             >
-              {/* Only the front card shows copy — backs are blank depth plates */}
-              {isFront ? (
-                <>
-                  <p
-                    className={cn(
-                      "font-semibold text-foreground",
-                      wide ? "text-sm sm:text-base" : "text-xs",
-                    )}
-                  >
-                    {card.title}
-                  </p>
-                  <p className="mt-1 text-[10px] text-muted-foreground sm:text-[11px]">
-                    {card.meta}
-                  </p>
-                  {wide ? (
-                    <p className="mt-2 text-xs text-muted-foreground/80">
-                      {card.detail}
-                    </p>
-                  ) : null}
-                  <span className="mt-3 inline-flex rounded-full bg-foreground px-3 py-1.5 text-[10px] font-medium text-background sm:text-[11px]">
-                    Choose tonight
-                  </span>
-                </>
-              ) : (
-                <div className="h-16 sm:h-20" aria-hidden />
-              )}
+              {/* Keep copy on every plate so a cycle reads as a deck shuffle, not a text flash */}
+              <p
+                className={cn(
+                  "font-semibold text-foreground",
+                  wide ? "text-sm sm:text-base" : "text-xs",
+                  !isFront && "opacity-80",
+                )}
+              >
+                {card.title}
+              </p>
+              <p className="mt-1 text-[10px] text-muted-foreground sm:text-[11px]">
+                {card.meta}
+              </p>
+              {wide ? (
+                <p className="mt-2 text-xs text-muted-foreground/80">
+                  {card.detail}
+                </p>
+              ) : null}
+              <motion.span
+                className="mt-3 inline-flex rounded-full bg-foreground px-3 py-1.5 text-[10px] font-medium text-background sm:text-[11px]"
+                initial={false}
+                animate={{
+                  opacity: isFront ? 1 : 0,
+                  y: isFront ? 0 : 6,
+                }}
+                transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+              >
+                Choose tonight
+              </motion.span>
             </motion.div>
           );
         })}

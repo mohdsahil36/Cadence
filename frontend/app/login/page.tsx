@@ -33,18 +33,36 @@ import { loginContent } from "./content";
 const easeOut = [0.22, 1, 0.36, 1] as const;
 
 const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 18 },
+  hidden: { opacity: 0, y: 22 },
   show: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.7, ease: easeOut },
+    transition: { duration: 0.85, ease: easeOut },
   },
 };
 
 const stagger: Variants = {
   hidden: {},
   show: {
-    transition: { staggerChildren: 0.1, delayChildren: 0.08 },
+    transition: { staggerChildren: 0.12, delayChildren: 0.45 },
+  },
+};
+
+const sceneryReveal: Variants = {
+  hidden: { opacity: 0, scale: 1.06 },
+  show: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 1.15, ease: easeOut },
+  },
+};
+
+const navReveal: Variants = {
+  hidden: { opacity: 0, y: -14 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.8, ease: easeOut, delay: 0.2 },
   },
 };
 
@@ -106,8 +124,11 @@ function useIsDark() {
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
-    document.body.style.backgroundColor = dark ? "#14131a" : "#f3eee6";
+    const color = dark ? "#14131a" : "#f3eee6";
+    document.documentElement.style.backgroundColor = color;
+    document.body.style.backgroundColor = color;
     return () => {
+      document.documentElement.style.backgroundColor = "";
       document.body.style.backgroundColor = "";
     };
   }, [dark]);
@@ -185,16 +206,22 @@ export default function LoginPage() {
     <div className="relative isolate min-h-svh w-full bg-[#f3eee6] text-foreground dark:bg-[#14131a]">
       <header className="fixed inset-x-0 top-0 z-40 flex justify-center px-3 pt-3 sm:px-5 sm:pt-4">
         <motion.div
-          layout
-          transition={{ duration: 0.35, ease: easeOut }}
-          className={[
-            "flex w-full items-center justify-between gap-3 rounded-full border shadow-md backdrop-blur-2xl backdrop-saturate-150 transition-[max-width,padding,background-color,border-color,color] duration-300 ease-out",
-            // Over hero: light glass + white type. Over content: theme glass + readable type.
-            scrolled
-              ? "max-w-3xl border-border/50 bg-background/80 py-3 pr-3 pl-5 text-foreground sm:max-w-4xl sm:py-3.5 sm:pr-3.5 sm:pl-6 dark:border-white/12 dark:bg-background/75"
-              : "max-w-2xl border-white/30 bg-white/25 py-3 pr-3 pl-5 text-white sm:max-w-3xl sm:py-3.5 dark:border-white/15 dark:bg-white/10",
-          ].join(" ")}
+          className="flex w-full justify-center"
+          variants={navReveal}
+          initial={reduceMotion ? false : "hidden"}
+          animate="show"
         >
+          <motion.div
+            layout
+            transition={{ duration: 0.35, ease: easeOut }}
+            className={[
+              "flex w-full items-center justify-between gap-3 rounded-full border shadow-md backdrop-blur-2xl backdrop-saturate-150 transition-[max-width,padding,background-color,border-color,color] duration-300 ease-out",
+              // Over hero: light glass + white type. Over content: theme glass + readable type.
+              scrolled
+                ? "max-w-3xl border-border/50 bg-background/80 py-3 pr-3 pl-5 text-foreground sm:max-w-4xl sm:py-3.5 sm:pr-3.5 sm:pl-6 dark:border-white/12 dark:bg-background/75"
+                : "max-w-2xl border-white/30 bg-white/25 py-3 pr-3 pl-5 text-white sm:max-w-3xl sm:py-3.5 dark:border-white/15 dark:bg-white/10",
+            ].join(" ")}
+          >
           <a
             href="#top"
             className={[
@@ -261,15 +288,30 @@ export default function LoginPage() {
               {loginContent.nav.cta}
             </Button>
           </nav>
+          </motion.div>
         </motion.div>
       </header>
 
       <main className="relative z-10 w-full">
         <section
           id="top"
-          className="relative flex min-h-svh w-full items-center justify-center overflow-hidden"
+          className="relative flex min-h-svh w-full items-center justify-center overflow-hidden bg-[#14131a]"
         >
-          <PixelScenery className="inset-0" />
+          {/* Solid base so the scenery fade never exposes the page/body white. */}
+          <div aria-hidden className="absolute inset-0 bg-[#14131a]" />
+          <motion.div
+            className="absolute inset-0"
+            variants={sceneryReveal}
+            initial={reduceMotion ? false : "hidden"}
+            animate="show"
+          >
+            <PixelScenery className="inset-0" />
+          </motion.div>
+          {/* Extra seam blend into the cream / charcoal page below */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-32 bg-linear-to-t from-[#f3eee6] to-transparent dark:from-[#14131a]"
+          />
 
           <motion.div
             className="relative z-10 flex w-full flex-col items-center px-4 pt-28 pb-16"
@@ -566,7 +608,7 @@ function FeatureCell({
   return (
     <motion.div className={span} variants={fadeUp} custom={index}>
       <Card
-        className={`group flex h-full min-h-64 cursor-default flex-col gap-0 overflow-hidden rounded-3xl border-0 py-0 shadow-none ring-0 transition-shadow duration-150 ease-out hover:shadow-md sm:min-h-72 ${theme.card}`}
+        className={`nocta-bento-card group flex h-full min-h-64 cursor-default flex-col gap-0 overflow-hidden rounded-3xl border-0 py-0 ring-0 transition-shadow duration-150 ease-out sm:min-h-72`}
       >
         {isWide ? (
           <div className="flex h-full min-h-72 flex-col gap-4 p-6 sm:flex-row sm:items-stretch sm:gap-6 sm:p-8">
