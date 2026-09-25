@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   description: "Engineering activity intelligence",
 };
 
-/** Login-only: paint theme bg before hydrate (pairs with suppressHydrationWarning). */
+/** Set login page bg before React loads. */
 const loginThemeBoot = `(function(){try{if(location.pathname.indexOf("/login")!==0)return;var s=localStorage.getItem("nocta-theme");var h=new Date().getHours();var dark=s==="dark"||(s!=="light"&&(h>=17||h<7));var c=dark?"#0e1219":"#e8eef5";document.documentElement.classList.toggle("dark",dark);document.documentElement.style.backgroundColor=c;var b=document.body;if(b)b.style.backgroundColor=c;}catch(e){}})();`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

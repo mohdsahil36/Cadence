@@ -23,7 +23,7 @@ export const loginContent = {
   why: {
     eyebrow: "Why Nocta exists",
     before: "After work the list never ended, and the night was already short.",
-    // Core idea — italic serif, lights up on scroll
+    // Italic line — lights up on scroll
     emphasis: "Score what matters. Pick one next step.",
     after: "Let rest stay honest.",
   },
@@ -74,11 +74,37 @@ export const loginContent = {
     trust: "Built by a developer job-hunting after work",
   },
   auth: {
-    title: "Start tonight",
-    body: "Account and sync ship in a later build. For now, explore how Nocta thinks.",
-    // deferred to v2: real auth + session
-    cta: "Continue",
+    panelTitle: "One meaningful action, every night.",
+    panelBody: "The calm way to decide what matters before you sleep.",
+    google: "Continue with Google",
+    or: "or",
+    email: "Email",
+    emailPlaceholder: "you@example.com",
+    password: "Password",
+    passwordPlaceholder: "Your password",
+    // Auth later
     close: "Close",
+    login: {
+      tab: "Sign in",
+      title: "Welcome back",
+      body: "Sign in to continue your evening.",
+      forgot: "Forgot password?",
+      cta: "Sign in",
+      switchPrompt: "New to Nocta?",
+      switchAction: "Create an account",
+    },
+    signup: {
+      tab: "Sign up",
+      title: "Create your account",
+      body: "Start with one clear action tonight.",
+      name: "Name",
+      namePlaceholder: "Your name",
+      confirmPassword: "Confirm password",
+      confirmPlaceholder: "Repeat your password",
+      cta: "Create account",
+      switchPrompt: "Already have an account?",
+      switchAction: "Sign in",
+    },
   },
 } as const;
 

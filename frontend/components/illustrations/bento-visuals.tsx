@@ -1,14 +1,14 @@
 "use client";
 
 /**
- * Bento visuals — Nocta ink + glow (tonight's priority), cool moonlight palette.
+ * Bento illustrations for How Nocta works.
  */
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { cn } from "cn";
 
-/** Quiet → tonight intensity. Ember only on the highest rung. */
+/** Bar / cell colors from quiet to priority. */
 const SIGNAL_TONE = [
   "bg-nocta-ink/12 dark:bg-nocta-ink/15",
   "bg-nocta-ink/28 dark:bg-nocta-ink/30",
@@ -19,10 +19,7 @@ const SIGNAL_TONE = [
 const labelClass =
   "text-[10px] font-medium tracking-[0.14em] text-muted-foreground uppercase";
 
-/**
- * Outer bento shell class lives in globals.css (`.nocta-bento-card`) so the
- * fill isn't fought by Card's `bg-card` / Tailwind cascade.
- */
+/** Card shell styles live in globals.css as .nocta-bento-card */
 const bentoCard = "nocta-bento-card";
 
 export const BENTO_THEME = {
@@ -57,7 +54,7 @@ export type BentoId = keyof typeof BENTO_THEME;
 
 type VisualProps = { className?: string; wide?: boolean };
 
-/** Uptime-style bars */
+/** Priority bars */
 export function ScoringVisual({ className, wide }: VisualProps) {
   const reduce = useReducedMotion();
   const [hover, setHover] = useState<number | null>(null);
@@ -122,7 +119,7 @@ export function ScoringVisual({ className, wide }: VisualProps) {
   );
 }
 
-/** Stacked rotating cards — scales up when wide */
+/** Rotating action cards */
 export function OneActionVisual({ className, wide }: VisualProps) {
   const reduce = useReducedMotion();
   const cards = [
@@ -195,7 +192,7 @@ export function OneActionVisual({ className, wide }: VisualProps) {
                   : { type: "spring", stiffness: 220, damping: 24, mass: 0.9 }
               }
             >
-              {/* Keep copy on every plate so a cycle reads as a deck shuffle, not a text flash */}
+              {/* Always show text so the stack reads as real cards */}
               <p
                 className={cn(
                   "font-serif tracking-[-0.02em] text-nocta-ink",
@@ -347,10 +344,7 @@ export function RecoveryVisual({ className }: VisualProps) {
   );
 }
 
-/**
- * Category silence meter — replaces the sparse node graph.
- * Shows 5 goal areas; neglected ones glow and rise.
- */
+/** Neglected goal areas */
 export function NeglectedVisual({ className }: VisualProps) {
   const reduce = useReducedMotion();
   const areas = [
