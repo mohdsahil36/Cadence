@@ -1,206 +1,88 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import Lenis from "lenis";
-import { Moon, Sun } from "lucide-react";
-import {
-  AnimatePresence,
-  motion,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-  type MotionValue,
-  type Variants,
-} from "motion/react";
+import { useState } from "react";
+import { Moon, Sun, XIcon } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  BENTO_THEME,
-  BentoVisual,
-  type BentoId,
-} from "@/components/illustrations/bento-visuals";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { PixelScenery } from "@/components/illustrations/pixel-scenery";
 import { loginContent } from "./content";
+import {
+  loginWithEmail,
+  loginWithGoogle,
+  signupWithEmail,
+  type AuthMode,
+} from "./functions/auth";
+import { DynamicLine } from "./ui/dynamic-line";
+import { FeatureCell } from "./ui/feature-cell";
+import { GoogleMark } from "./ui/google-mark";
+import { PasswordField } from "./ui/password-field";
+import {
+  easeOut,
+  fadeUp,
+  navReveal,
+  sceneryReveal,
+  sectionReveal,
+  SHELL,
+  stagger,
+} from "./ui/motion";
+import { useIsDark, writeTheme } from "./ui/theme";
+import { usePageScroll } from "./ui/use-page-scroll";
+import { WhyBuiltSection } from "./ui/why-built-section";
 
-const easeOut = [0.22, 1, 0.36, 1] as const;
-
-const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 22 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.85, ease: easeOut },
-  },
-};
-
-const stagger: Variants = {
-  hidden: {},
-  show: {
-    transition: { staggerChildren: 0.12, delayChildren: 0.45 },
-  },
-};
-
-const sceneryReveal: Variants = {
-  hidden: { opacity: 0, scale: 1.06 },
-  show: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 1.15, ease: easeOut },
-  },
-};
-
-const navReveal: Variants = {
-  hidden: { opacity: 0, y: -14 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.8, ease: easeOut, delay: 0.2 },
-  },
-};
-
-const sectionReveal: Variants = {
-  hidden: { opacity: 0, y: 28 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.75, ease: easeOut },
-  },
-};
-
-const SHELL = "mx-auto w-full max-w-xl px-4 sm:max-w-2xl sm:px-6";
-
-const THEME_KEY = "nocta-theme";
-const themeListeners = new Set<() => void>();
-
-/** Local evening window: 5pm → 7am. */
-function isLocalEvening(date = new Date()) {
-  const h = date.getHours();
-  return h >= 17 || h < 7;
-}
-
-function readDarkPreference(): boolean {
-  const stored = window.localStorage.getItem(THEME_KEY);
-  if (stored === "dark") return true;
-  if (stored === "light") return false;
-  // auto / unset → follow local clock
-  return isLocalEvening();
-}
-
-function subscribeTheme(onStoreChange: () => void) {
-  themeListeners.add(onStoreChange);
-  const mq = window.matchMedia("(prefers-color-scheme: dark)");
-  mq.addEventListener("change", onStoreChange);
-  window.addEventListener("storage", onStoreChange);
-  // Re-check when the clock crosses the evening boundary (every minute)
-  const tick = window.setInterval(onStoreChange, 60_000);
-  return () => {
-    themeListeners.delete(onStoreChange);
-    mq.removeEventListener("change", onStoreChange);
-    window.removeEventListener("storage", onStoreChange);
-    window.clearInterval(tick);
-  };
-}
-
-function writeTheme(next: boolean) {
-  window.localStorage.setItem(THEME_KEY, next ? "dark" : "light");
-  document.documentElement.classList.toggle("dark", next);
-  themeListeners.forEach((listener) => listener());
-}
-
-function useIsDark() {
-  const dark = useSyncExternalStore(
-    subscribeTheme,
-    readDarkPreference,
-    () => false,
-  );
-
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", dark);
-    const color = dark ? "#0e1219" : "#e8eef5";
-    document.documentElement.style.backgroundColor = color;
-    document.body.style.backgroundColor = color;
-    return () => {
-      document.documentElement.style.backgroundColor = "";
-      document.body.style.backgroundColor = "";
-    };
-  }, [dark]);
-
-  return dark;
-}
+const AUTH_INPUT_CLASS =
+  "auth-input h-10 rounded-xl border px-3.5 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0";
 
 export default function LoginPage() {
   const reduceMotion = useReducedMotion();
-  const [scrolled, setScrolled] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [name, setName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const dark = useIsDark();
-  const lenisRef = useRef<Lenis | null>(null);
-
-  useEffect(() => {
-    if (reduceMotion) return;
-
-    const lenis = new Lenis({
-      lerp: 0.1,
-      smoothWheel: true,
-      wheelMultiplier: 0.95,
-      touchMultiplier: 1,
-      syncTouch: false,
-    });
-    lenisRef.current = lenis;
-
-    const onScroll = (instance: Lenis) => {
-      const next = instance.scroll > 24;
-      setScrolled((prev) => (prev === next ? prev : next));
-    };
-    lenis.on("scroll", onScroll);
-
-    let raf = 0;
-    const frame = (time: number) => {
-      lenis.raf(time);
-      raf = requestAnimationFrame(frame);
-    };
-    raf = requestAnimationFrame(frame);
-
-    return () => {
-      cancelAnimationFrame(raf);
-      lenis.off("scroll", onScroll);
-      lenis.destroy();
-      lenisRef.current = null;
-    };
-  }, [reduceMotion]);
-
-  useEffect(() => {
-    if (!reduceMotion) return;
-    const onScroll = () => {
-      const next = window.scrollY > 24;
-      setScrolled((prev) => (prev === next ? prev : next));
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [reduceMotion]);
+  const { scrolled, scrollToId } = usePageScroll(reduceMotion, authOpen);
 
   const toggleTheme = () => writeTheme(!dark);
 
-  const scrollToId = (id: string) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const lenis = lenisRef.current;
-    if (lenis) {
-      lenis.scrollTo(el, { offset: -88, duration: 1.2 });
-      return;
-    }
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  const openAuth = (mode: AuthMode = "login") => {
+    setAuthMode(mode);
+    setAuthOpen(true);
   };
 
-  const openAuth = () => setAuthOpen(true);
+  const resetAuthFields = () => {
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+    setName("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+  };
+
+  const switchAuthMode = (mode: AuthMode) => {
+    setAuthMode(mode);
+    resetAuthFields();
+  };
+
+  const handleAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (authMode === "login") {
+      await loginWithEmail({ email, password });
+      return;
+    }
+    await signupWithEmail({ name, email, password, confirmPassword });
+  };
 
   return (
     <div className="relative isolate min-h-svh w-full bg-nocta-paper text-foreground dark:bg-nocta-paper">
@@ -216,78 +98,76 @@ export default function LoginPage() {
             transition={{ duration: 0.35, ease: easeOut }}
             className={[
               "flex w-full items-center justify-between gap-3 rounded-full border shadow-md backdrop-blur-2xl backdrop-saturate-150 transition-[max-width,padding,background-color,border-color,color] duration-300 ease-out",
-              // Over hero: light glass + white type. Over content: theme glass + readable type.
+              // Glass nav: white over hero, theme colors after scroll
               scrolled
                 ? "max-w-3xl border-border/50 bg-background/80 py-3 pr-3 pl-5 text-foreground sm:max-w-4xl sm:py-3.5 sm:pr-3.5 sm:pl-6 dark:border-white/12 dark:bg-background/75"
                 : "max-w-2xl border-white/30 bg-white/25 py-3 pr-3 pl-5 text-white sm:max-w-3xl sm:py-3.5 dark:border-white/15 dark:bg-white/10",
             ].join(" ")}
           >
-          <a
-            href="#top"
-            className={[
-              "cursor-pointer font-serif text-lg tracking-[-0.03em] transition-colors duration-300 sm:text-xl",
-              scrolled ? "text-foreground" : "text-white",
-            ].join(" ")}
-          >
-            {loginContent.brand}
-          </a>
-          <nav className="flex items-center gap-0.5 sm:gap-1.5">
-            <Button
-              variant="ghost"
-              size="default"
+            <a
+              href="#top"
               className={[
-                "hidden cursor-pointer sm:inline-flex",
-                scrolled
-                  ? "text-foreground/75 hover:bg-foreground/5 hover:text-foreground"
-                  : "text-white/85 hover:bg-white/15 hover:text-white",
+                "cursor-pointer font-serif text-lg tracking-[-0.03em] transition-colors duration-300 sm:text-xl",
+                scrolled ? "text-foreground" : "text-white",
               ].join(" ")}
-              onClick={() => scrollToId("how-it-works")}
             >
-              {loginContent.nav.howItWorks}
-            </Button>
-            <Button
-              variant="ghost"
-              size="default"
-              className={[
-                "hidden cursor-pointer md:inline-flex",
-                scrolled
-                  ? "text-foreground/75 hover:bg-foreground/5 hover:text-foreground"
-                  : "text-white/85 hover:bg-white/15 hover:text-white",
-              ].join(" ")}
-              onClick={() => scrollToId("close")}
-            >
-              {loginContent.nav.about}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className={[
-                "cursor-pointer",
-                scrolled
-                  ? "text-foreground hover:bg-foreground/5 hover:text-foreground"
-                  : "text-white hover:bg-white/15 hover:text-white",
-              ].join(" ")}
-              onClick={toggleTheme}
-              aria-label={
-                dark ? "Switch to daytime look" : "Switch to evening look"
-              }
-              title={dark ? "Daytime (override)" : "Evening (override)"}
-            >
-              {dark ? <Sun /> : <Moon />}
-            </Button>
-            <Button
-              size="default"
-              className={[
-                "cursor-pointer rounded-full px-4 sm:px-5",
-                scrolled
-                  ? ""
-                  : "bg-white text-zinc-900 hover:bg-white/90",
-              ].join(" ")}
-              onClick={openAuth}
-            >
-              {loginContent.nav.cta}
-            </Button>
-          </nav>
+              {loginContent.brand}
+            </a>
+            <nav className="flex items-center gap-0.5 sm:gap-1.5">
+              <Button
+                variant="ghost"
+                size="default"
+                className={[
+                  "hidden cursor-pointer sm:inline-flex",
+                  scrolled
+                    ? "text-foreground/75 hover:bg-foreground/5 hover:text-foreground"
+                    : "text-white/85 hover:bg-white/15 hover:text-white",
+                ].join(" ")}
+                onClick={() => scrollToId("how-it-works")}
+              >
+                {loginContent.nav.howItWorks}
+              </Button>
+              <Button
+                variant="ghost"
+                size="default"
+                className={[
+                  "hidden cursor-pointer md:inline-flex",
+                  scrolled
+                    ? "text-foreground/75 hover:bg-foreground/5 hover:text-foreground"
+                    : "text-white/85 hover:bg-white/15 hover:text-white",
+                ].join(" ")}
+                onClick={() => scrollToId("close")}
+              >
+                {loginContent.nav.about}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={[
+                  "cursor-pointer",
+                  scrolled
+                    ? "text-foreground hover:bg-foreground/5 hover:text-foreground"
+                    : "text-white hover:bg-white/15 hover:text-white",
+                ].join(" ")}
+                onClick={toggleTheme}
+                aria-label={
+                  dark ? "Switch to daytime look" : "Switch to evening look"
+                }
+                title={dark ? "Daytime (override)" : "Evening (override)"}
+              >
+                {dark ? <Sun /> : <Moon />}
+              </Button>
+              <Button
+                size="default"
+                className={[
+                  "cursor-pointer rounded-full px-4 sm:px-5",
+                  scrolled ? "" : "bg-white text-zinc-900 hover:bg-white/90",
+                ].join(" ")}
+                onClick={() => openAuth()}
+              >
+                {loginContent.nav.cta}
+              </Button>
+            </nav>
           </motion.div>
         </motion.div>
       </header>
@@ -297,7 +177,6 @@ export default function LoginPage() {
           id="top"
           className="relative flex min-h-svh w-full items-center justify-center overflow-hidden bg-nocta-night"
         >
-          {/* Solid base so the scenery fade never exposes the page/body white. */}
           <div aria-hidden className="absolute inset-0 bg-nocta-night" />
           <motion.div
             className="absolute inset-0"
@@ -307,10 +186,10 @@ export default function LoginPage() {
           >
             <PixelScenery className="inset-0" />
           </motion.div>
-          {/* Extra seam blend into the page below */}
+          {/* Fade hero into page */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-32 bg-linear-to-t from-nocta-paper to-transparent"
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-1 h-32 bg-linear-to-t from-nocta-paper to-transparent"
           />
 
           <motion.div
@@ -320,17 +199,19 @@ export default function LoginPage() {
             animate="show"
           >
             <div className={`${SHELL} flex flex-col items-center text-center`}>
-              {/* 1. Brand + title as one line */}
               <motion.h1
                 variants={fadeUp}
                 className="font-serif text-4xl leading-tight tracking-[-0.04em] text-white drop-shadow-[0_2px_18px_rgba(0,0,0,0.45)] sm:text-5xl lg:text-6xl"
               >
-                <span className="whitespace-nowrap">{loginContent.hero.wordmark}</span>
-                <span className="mx-2 font-normal text-white/45 sm:mx-3">—</span>
+                <span className="whitespace-nowrap">
+                  {loginContent.hero.wordmark}
+                </span>
+                <span className="mx-2 font-normal text-white/45 sm:mx-3">
+                  —
+                </span>
                 <span className="text-white/90">{loginContent.hero.title}</span>
               </motion.h1>
 
-              {/* 2. Tagline */}
               <motion.p
                 variants={fadeUp}
                 className="mx-auto mt-4 max-w-md text-base font-medium leading-snug text-white/95 drop-shadow-[0_1px_10px_rgba(0,0,0,0.4)] sm:mt-5 sm:max-w-lg sm:text-lg"
@@ -338,7 +219,6 @@ export default function LoginPage() {
                 {loginContent.hero.tagline}
               </motion.p>
 
-              {/* 3. Dynamic line */}
               <motion.div
                 variants={fadeUp}
                 className="mx-auto mt-3 w-full max-w-lg"
@@ -346,7 +226,6 @@ export default function LoginPage() {
                 <DynamicLine lines={loginContent.hero.rotating} />
               </motion.div>
 
-              {/* 4. Description */}
               <motion.p
                 variants={fadeUp}
                 className="mx-auto mt-3 max-w-sm text-sm leading-6 text-white/75 drop-shadow-[0_1px_8px_rgba(0,0,0,0.35)] sm:max-w-md sm:text-[0.95rem]"
@@ -361,7 +240,7 @@ export default function LoginPage() {
                 <Button
                   size="lg"
                   className="h-12 min-w-40 cursor-pointer rounded-full bg-white px-7 text-sm font-semibold text-zinc-900 shadow-[0_8px_28px_rgba(0,0,0,0.28)] transition-[transform,box-shadow,background-color] duration-200 hover:bg-white hover:shadow-[0_10px_32px_rgba(0,0,0,0.35)] hover:brightness-105 active:scale-[0.98]"
-                  onClick={openAuth}
+                  onClick={() => openAuth()}
                 >
                   {loginContent.hero.primaryCta}
                 </Button>
@@ -406,11 +285,7 @@ export default function LoginPage() {
               viewport={{ once: true, amount: 0.1 }}
             >
               {loginContent.features.items.map((feature, index) => (
-                <FeatureCell
-                  key={feature.id}
-                  feature={feature}
-                  index={index}
-                />
+                <FeatureCell key={feature.id} feature={feature} index={index} />
               ))}
             </motion.div>
           </div>
@@ -441,7 +316,7 @@ export default function LoginPage() {
               <Button
                 size="lg"
                 className="mt-9 h-11 min-w-36 cursor-pointer rounded-full px-6"
-                onClick={openAuth}
+                onClick={() => openAuth()}
               >
                 {loginContent.close.cta}
               </Button>
@@ -456,190 +331,353 @@ export default function LoginPage() {
         </motion.section>
       </main>
 
-      <Dialog open={authOpen} onOpenChange={setAuthOpen}>
-        <DialogContent className="gap-5 p-6 sm:max-w-md">
-          <DialogHeader>
-            <p className="font-serif text-lg tracking-[-0.02em] text-foreground">
-              {loginContent.brand}
-            </p>
-            <DialogTitle className="font-serif text-2xl font-normal tracking-[-0.03em]">
-              {loginContent.auth.title}
-            </DialogTitle>
-            <DialogDescription className="text-sm leading-6">
-              {loginContent.auth.body}
-            </DialogDescription>
-          </DialogHeader>
-          {/* deferred to v2: real auth + session */}
-          <DialogClose render={<Button className="w-full cursor-pointer" size="lg" />}>
-            {loginContent.auth.cta}
-          </DialogClose>
+      <Dialog
+        open={authOpen}
+        onOpenChange={(open) => {
+          setAuthOpen(open);
+          if (!open) {
+            resetAuthFields();
+            setAuthMode("login");
+          }
+        }}
+      >
+        <DialogContent
+          showCloseButton={false}
+          overlayClassName="bg-nocta-night/70 duration-200 supports-backdrop-filter:backdrop-blur-md"
+          className="flex h-[min(48rem,94svh)] w-[calc(100%-1.5rem)] max-w-[60rem] flex-col gap-0 overflow-hidden rounded-2xl border-0 bg-nocta-night p-0 text-zinc-900 shadow-[0_24px_64px_rgba(0,0,0,0.4)] ring-1 ring-white/12 sm:max-w-[60rem] sm:rounded-3xl"
+        >
+          <div className="relative h-full min-h-0 w-full overflow-hidden">
+            {/* Full-bleed night image */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/nocta-auth-panel.jpg"
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover object-[center_40%]"
+            />
+            <div className="absolute inset-0 bg-linear-to-r from-nocta-night/60 via-nocta-night/30 to-nocta-night/55" />
+            <div className="absolute inset-0 bg-linear-to-t from-nocta-night/75 via-transparent to-nocta-night/35" />
+
+            <div className="relative z-10 flex h-full min-h-0 w-full">
+              {/* Left atmosphere */}
+              <div className="hidden min-h-0 min-w-0 flex-1 flex-col justify-between p-8 text-white md:flex lg:p-10">
+                <p className="font-serif text-xl tracking-[-0.03em]">
+                  {loginContent.brand}
+                </p>
+                <div className="max-w-[16rem] space-y-3 lg:max-w-xs">
+                  <p className="font-serif text-2xl leading-tight tracking-[-0.03em] lg:text-3xl">
+                    {loginContent.auth.panelTitle}
+                  </p>
+                  <p className="text-sm leading-6 text-white/75">
+                    {loginContent.auth.panelBody}
+                  </p>
+                </div>
+                <p className="text-[11px] text-white/45">
+                  {loginContent.close.trust}
+                </p>
+              </div>
+
+              {/* Right form */}
+              <div className="flex h-full min-h-0 w-full shrink-0 justify-end p-5 sm:p-6 md:w-[30rem] lg:w-[32rem]">
+                <div className="nocta-auth-form relative flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-2xl">
+                  <button
+                    type="button"
+                    aria-label={loginContent.auth.close}
+                    onClick={() => {
+                      setAuthOpen(false);
+                      resetAuthFields();
+                      setAuthMode("login");
+                    }}
+                    className="absolute top-4 right-4 z-20 inline-flex size-8 cursor-pointer items-center justify-center rounded-lg text-(--auth-soft) transition-colors hover:bg-(--auth-muted) hover:text-(--auth-ink)"
+                  >
+                    <XIcon className="size-4" />
+                  </button>
+
+                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pt-7 pr-12 sm:px-8 sm:pt-8 sm:pr-14">
+                    <p className="mb-4 shrink-0 font-serif text-base tracking-[-0.02em] text-(--auth-ink) md:hidden">
+                      {loginContent.brand}
+                    </p>
+
+                    <div
+                      role="tablist"
+                      aria-label="Account"
+                      className="auth-tabs grid shrink-0 grid-cols-2 rounded-xl p-1"
+                    >
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={authMode === "login"}
+                        className={[
+                          "h-9 cursor-pointer rounded-lg text-sm font-medium outline-none transition-colors duration-150",
+                          authMode === "login"
+                            ? "auth-tab-active"
+                            : "auth-tab-idle",
+                        ].join(" ")}
+                        onClick={() => switchAuthMode("login")}
+                      >
+                        {loginContent.auth.login.tab}
+                      </button>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={authMode === "signup"}
+                        className={[
+                          "h-9 cursor-pointer rounded-lg text-sm font-medium outline-none transition-colors duration-150",
+                          authMode === "signup"
+                            ? "auth-tab-active"
+                            : "auth-tab-idle",
+                        ].join(" ")}
+                        onClick={() => switchAuthMode("signup")}
+                      >
+                        {loginContent.auth.signup.tab}
+                      </button>
+                    </div>
+
+                    <DialogHeader className="mt-5 shrink-0 gap-1.5 text-left">
+                      <div className="relative min-h-[3.5rem]">
+                        <AnimatePresence mode="wait" initial={false}>
+                          <motion.div
+                            key={authMode}
+                            initial={
+                              reduceMotion ? false : { opacity: 0, y: 6 }
+                            }
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={
+                              reduceMotion
+                                ? undefined
+                                : { opacity: 0, y: -4 }
+                            }
+                            transition={{ duration: 0.2, ease: easeOut }}
+                            className="absolute inset-x-0 top-0 flex flex-col gap-1.5"
+                          >
+                            <DialogTitle className="font-serif text-xl font-normal tracking-[-0.04em] text-(--auth-ink) sm:text-2xl">
+                              {authMode === "login"
+                                ? loginContent.auth.login.title
+                                : loginContent.auth.signup.title}
+                            </DialogTitle>
+                            <DialogDescription className="text-sm leading-5 text-(--auth-soft)">
+                              {authMode === "login"
+                                ? loginContent.auth.login.body
+                                : loginContent.auth.signup.body}
+                            </DialogDescription>
+                          </motion.div>
+                        </AnimatePresence>
+                      </div>
+                    </DialogHeader>
+
+                    <form
+                      id="nocta-auth-form"
+                      className="mt-4 flex flex-col pb-5"
+                      onSubmit={handleAuthSubmit}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => void loginWithGoogle()}
+                        className="auth-input inline-flex h-10 w-full shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl border text-sm font-medium transition-colors hover:bg-(--auth-muted)"
+                      >
+                        <GoogleMark />
+                        {loginContent.auth.google}
+                      </button>
+
+                      <div className="my-4 flex shrink-0 items-center gap-3">
+                        <div className="h-px flex-1 bg-(--auth-line)" />
+                        <span className="text-xs text-(--auth-soft)">
+                          {loginContent.auth.or}
+                        </span>
+                        <div className="h-px flex-1 bg-(--auth-line)" />
+                      </div>
+
+                      <div className="flex flex-col gap-3.5">
+                        <div
+                          className={[
+                            "grid transition-[grid-template-rows] duration-200 ease-out",
+                            authMode === "signup"
+                              ? "grid-rows-[1fr]"
+                              : "grid-rows-[0fr]",
+                          ].join(" ")}
+                          aria-hidden={authMode !== "signup"}
+                        >
+                          <div
+                            className={[
+                              "min-h-0",
+                              authMode === "signup"
+                                ? "overflow-visible"
+                                : "overflow-hidden",
+                            ].join(" ")}
+                          >
+                            <div
+                              className={[
+                                "flex flex-col gap-2 pb-3.5 transition-opacity duration-200 ease-out",
+                                authMode === "signup"
+                                  ? "opacity-100"
+                                  : "opacity-0",
+                              ].join(" ")}
+                            >
+                              <Label
+                                htmlFor="nocta-auth-name"
+                                className="text-sm font-medium text-(--auth-ink)"
+                              >
+                                {loginContent.auth.signup.name}
+                              </Label>
+                              <Input
+                                id="nocta-auth-name"
+                                type="text"
+                                name="name"
+                                autoComplete="name"
+                                tabIndex={authMode === "signup" ? 0 : -1}
+                                placeholder={
+                                  loginContent.auth.signup.namePlaceholder
+                                }
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className={AUTH_INPUT_CLASS}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                          <Label
+                            htmlFor="nocta-auth-email"
+                            className="text-sm font-medium text-(--auth-ink)"
+                          >
+                            {loginContent.auth.email}
+                          </Label>
+                          <Input
+                            id="nocta-auth-email"
+                            type="email"
+                            name="email"
+                            autoComplete="email"
+                            placeholder={loginContent.auth.emailPlaceholder}
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className={AUTH_INPUT_CLASS}
+                          />
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                          <div className="flex h-5 items-center justify-between gap-3">
+                            <Label
+                              htmlFor="nocta-auth-password"
+                              className="text-sm font-medium text-(--auth-ink)"
+                            >
+                              {loginContent.auth.password}
+                            </Label>
+                            {authMode === "login" ? (
+                              <button
+                                type="button"
+                                className="auth-link shrink-0 cursor-pointer text-xs transition-opacity hover:opacity-80"
+                              >
+                                {loginContent.auth.login.forgot}
+                              </button>
+                            ) : (
+                              <span aria-hidden className="invisible text-xs">
+                                {loginContent.auth.login.forgot}
+                              </span>
+                            )}
+                          </div>
+                          <PasswordField
+                            id="nocta-auth-password"
+                            name="password"
+                            autoComplete={
+                              authMode === "login"
+                                ? "current-password"
+                                : "new-password"
+                            }
+                            placeholder={loginContent.auth.passwordPlaceholder}
+                            value={password}
+                            onChange={setPassword}
+                            visible={showPassword}
+                            onVisibleChange={setShowPassword}
+                          />
+                        </div>
+
+                        <div
+                          className={[
+                            "grid transition-[grid-template-rows] duration-200 ease-out",
+                            authMode === "signup"
+                              ? "grid-rows-[1fr]"
+                              : "grid-rows-[0fr]",
+                          ].join(" ")}
+                          aria-hidden={authMode !== "signup"}
+                        >
+                          <div
+                            className={[
+                              "min-h-0",
+                              authMode === "signup"
+                                ? "overflow-visible"
+                                : "overflow-hidden",
+                            ].join(" ")}
+                          >
+                            <div
+                              className={[
+                                "flex flex-col gap-2 pb-1 transition-opacity duration-200 ease-out",
+                                authMode === "signup"
+                                  ? "opacity-100"
+                                  : "opacity-0",
+                              ].join(" ")}
+                            >
+                              <Label
+                                htmlFor="nocta-auth-confirm"
+                                className="text-sm font-medium text-(--auth-ink)"
+                              >
+                                {loginContent.auth.signup.confirmPassword}
+                              </Label>
+                              <PasswordField
+                                id="nocta-auth-confirm"
+                                name="confirmPassword"
+                                autoComplete="new-password"
+                                tabIndex={authMode === "signup" ? 0 : -1}
+                                placeholder={
+                                  loginContent.auth.signup.confirmPlaceholder
+                                }
+                                value={confirmPassword}
+                                onChange={setConfirmPassword}
+                                visible={showConfirmPassword}
+                                onVisibleChange={setShowConfirmPassword}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+
+                  {/* Sticky footer */}
+                  <div className="auth-footer shrink-0 border-t px-6 pt-4 pb-6 sm:px-8 sm:pt-5 sm:pb-7">
+                    <button
+                      type="submit"
+                      form="nocta-auth-form"
+                      className="auth-cta inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-xl text-sm font-semibold transition-colors"
+                    >
+                      {authMode === "login"
+                        ? loginContent.auth.login.cta
+                        : loginContent.auth.signup.cta}
+                    </button>
+                    <p className="mt-4 text-center text-sm text-(--auth-soft)">
+                      {authMode === "login"
+                        ? loginContent.auth.login.switchPrompt
+                        : loginContent.auth.signup.switchPrompt}{" "}
+                      <button
+                        type="button"
+                        className="auth-link cursor-pointer font-medium transition-opacity hover:opacity-80"
+                        onClick={() =>
+                          switchAuthMode(
+                            authMode === "login" ? "signup" : "login",
+                          )
+                        }
+                      >
+                        {authMode === "login"
+                          ? loginContent.auth.login.switchAction
+                          : loginContent.auth.signup.switchAction}
+                      </button>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-function WhyBuiltSection() {
-  const reduceMotion = useReducedMotion();
-  const ref = useRef<HTMLElement | null>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    // Light up while the block is still clearly on screen
-    offset: ["start 0.8", "start 0.25"],
-  });
-
-  const before = loginContent.why.before.split(" ");
-  const emphasis = loginContent.why.emphasis.split(" ");
-  const after = loginContent.why.after.split(" ");
-  const all = [
-    ...before.map((w) => ({ w, kind: "plain" as const })),
-    ...emphasis.map((w) => ({ w, kind: "emphasis" as const })),
-    ...after.map((w) => ({ w, kind: "plain" as const })),
-  ];
-
-  return (
-    <section
-      id="why"
-      ref={ref}
-      className="relative z-10 bg-nocta-paper px-4 py-16 sm:px-6 sm:py-20"
-    >
-      <div className="mx-auto w-full max-w-2xl text-center">
-        <p className="mb-5 text-xs font-medium tracking-[0.16em] text-muted-foreground uppercase">
-          {loginContent.why.eyebrow}
-        </p>
-        <p className="text-xl leading-relaxed text-balance sm:text-2xl sm:leading-relaxed lg:text-3xl lg:leading-snug">
-          {all.map((item, i) => {
-            const start = i / all.length;
-            const end = Math.min(1, start + 1.35 / all.length);
-            return (
-              <ScrollWord
-                key={`${item.kind}-${item.w}-${i}`}
-                progress={scrollYProgress}
-                range={[start, end]}
-                reduceMotion={!!reduceMotion}
-                emphasis={item.kind === "emphasis"}
-              >
-                {item.w}
-              </ScrollWord>
-            );
-          })}
-        </p>
-      </div>
-    </section>
-  );
-}
-
-function ScrollWord({
-  children,
-  progress,
-  range,
-  reduceMotion,
-  emphasis,
-}: {
-  children: string;
-  progress: MotionValue<number>;
-  range: [number, number];
-  reduceMotion: boolean;
-  emphasis?: boolean;
-}) {
-  const opacity = useTransform(
-    progress,
-    range,
-    reduceMotion ? [1, 1] : [0.2, 1],
-  );
-
-  return (
-    <motion.span
-      style={{ opacity }}
-      className={
-        emphasis
-          ? "mr-[0.28em] inline-block font-serif text-foreground italic"
-          : "mr-[0.28em] inline-block font-sans text-foreground"
-      }
-    >
-      {children}
-    </motion.span>
-  );
-}
-
-function DynamicLine({ lines }: { lines: readonly string[] }) {
-  const reduceMotion = useReducedMotion();
-  const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    if (reduceMotion || lines.length < 2) return;
-    const id = window.setInterval(() => {
-      setIndex((i) => (i + 1) % lines.length);
-    }, 3400);
-    return () => window.clearInterval(id);
-  }, [lines, reduceMotion]);
-
-  const text = lines[index] ?? lines[0];
-
-  return (
-    <div className="relative mx-auto flex min-h-10 items-center justify-center overflow-hidden sm:min-h-11">
-      <AnimatePresence mode="wait">
-        <motion.p
-          key={text}
-          initial={reduceMotion ? false : { opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={reduceMotion ? undefined : { opacity: 0, y: -6 }}
-          transition={{ duration: 0.4, ease: easeOut }}
-          className="absolute inset-x-0 px-2 text-center font-serif text-base leading-snug tracking-[-0.02em] text-white/90 italic drop-shadow-[0_2px_14px_rgba(0,0,0,0.65)] sm:text-lg"
-        >
-          {text}
-        </motion.p>
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function FeatureCell({
-  feature,
-  index,
-}: {
-  feature: (typeof loginContent.features.items)[number];
-  index: number;
-}) {
-  const theme = BENTO_THEME[feature.id as BentoId] ?? BENTO_THEME.scoring;
-  const isWide = feature.span === "two-thirds";
-  const span = isWide ? "lg:col-span-2" : "lg:col-span-1";
-
-  return (
-    <motion.div className={span} variants={fadeUp} custom={index}>
-      <Card
-        className="nocta-bento-card group flex h-full min-h-64 cursor-default flex-col gap-0 overflow-hidden rounded-[1.75rem] border-0 py-0 ring-0 transition-shadow duration-150 ease-out sm:min-h-72"
-      >
-        {isWide ? (
-          <div className="flex h-full min-h-72 flex-col gap-4 p-6 sm:flex-row sm:items-stretch sm:gap-6 sm:p-8">
-            <div className="flex w-full shrink-0 flex-col justify-center gap-3 sm:w-[34%] sm:max-w-xs">
-              <h3
-                className={`text-xl leading-snug sm:text-2xl ${theme.title}`}
-              >
-                {feature.title}
-              </h3>
-              <p className={`text-sm leading-6 ${theme.muted}`}>
-                {feature.description}
-              </p>
-            </div>
-            <div className="min-h-48 flex-1 sm:min-h-0">
-              <BentoVisual id={feature.id} wide />
-            </div>
-          </div>
-        ) : (
-          <div className="flex h-full flex-col p-6 sm:p-7">
-            <div className="mb-5 min-h-32 flex-1 sm:min-h-36">
-              <BentoVisual id={feature.id} />
-            </div>
-            <h3 className={`text-lg leading-snug sm:text-xl ${theme.title}`}>
-              {feature.title}
-            </h3>
-            <p className={`mt-2 text-sm leading-6 ${theme.muted}`}>
-              {feature.description}
-            </p>
-          </div>
-        )}
-      </Card>
-    </motion.div>
   );
 }

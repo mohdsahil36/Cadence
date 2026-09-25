@@ -79,7 +79,7 @@
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
-  /* Nocta brand — cool moonlight: mist paper, night field, teal glow */
+  /* Nocta colors */
   --nocta-glow: oklch(0.58 0.09 195);
   --nocta-paper: oklch(0.955 0.01 230);
   --nocta-ink: oklch(0.17 0.028 250);
@@ -171,7 +171,7 @@
   }
 }
 
-/* Lenis — required so native smooth scroll doesn't fight the virtual scroller */
+/* Lenis smooth scroll */
 html.lenis,
 html.lenis-smooth {
   height: auto;
@@ -221,7 +221,67 @@ html.lenis.lenis-stopped {
   }
 }
 
-/* Nocta bento — paper panels, not default elevated cards */
+/* Auth form card — locked moonlight palette (always light on night shell) */
+.nocta-auth-form {
+  --auth-surface: oklch(0.965 0.014 235);
+  --auth-muted: oklch(0.92 0.018 235);
+  --auth-ink: oklch(0.24 0.035 250);
+  --auth-soft: oklch(0.5 0.028 250);
+  --auth-line: oklch(0.86 0.02 235);
+  --auth-field: oklch(0.985 0.008 235);
+  --auth-glow: oklch(0.55 0.09 195);
+  --auth-night: oklch(0.22 0.035 250);
+  background-color: var(--auth-surface);
+  color: var(--auth-ink);
+  box-shadow:
+    0 16px 48px color-mix(in oklab, var(--auth-night) 28%, transparent),
+    0 0 0 1px color-mix(in oklab, var(--auth-ink) 6%, transparent);
+}
+.nocta-auth-form .auth-tabs {
+  background-color: var(--auth-muted);
+}
+.nocta-auth-form .auth-tab-active {
+  background-color: var(--auth-field);
+  color: var(--auth-ink);
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--auth-night) 12%, transparent);
+}
+.nocta-auth-form .auth-tab-idle {
+  color: var(--auth-soft);
+}
+.nocta-auth-form .auth-tab-idle:hover {
+  color: var(--auth-ink);
+}
+.nocta-auth-form .auth-input {
+  border-color: var(--auth-line) !important;
+  background-color: var(--auth-field) !important;
+  color: var(--auth-ink) !important;
+}
+.nocta-auth-form .auth-input::placeholder {
+  color: color-mix(in oklab, var(--auth-soft) 75%, white) !important;
+}
+.nocta-auth-form .auth-input:focus-visible {
+  border-color: var(--auth-glow) !important;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-ring-offset-shadow: 0 0 #0000;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--auth-glow) 22%, transparent);
+  outline: none;
+}
+.nocta-auth-form .auth-cta {
+  background-color: var(--auth-night);
+  color: white;
+}
+.nocta-auth-form .auth-cta:hover {
+  background-color: color-mix(in oklab, var(--auth-night) 88%, var(--auth-glow));
+}
+.nocta-auth-form .auth-link {
+  color: var(--auth-glow);
+}
+.nocta-auth-form .auth-footer {
+  border-color: var(--auth-line);
+  background-color: var(--auth-surface);
+}
+
+/* Bento card surface */
 .nocta-bento-card {
   background-color: color-mix(in oklab, var(--nocta-paper) 88%, var(--nocta-ink)) !important;
   box-shadow:
