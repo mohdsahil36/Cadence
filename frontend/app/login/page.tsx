@@ -24,6 +24,7 @@ import {
 import { DynamicLine } from "./ui/dynamic-line";
 import { FeatureCell } from "./ui/feature-cell";
 import { GoogleMark } from "./ui/google-mark";
+import { PasswordField } from "./ui/password-field";
 import {
   easeOut,
   fadeUp,
@@ -37,6 +38,9 @@ import { useIsDark, writeTheme } from "./ui/theme";
 import { usePageScroll } from "./ui/use-page-scroll";
 import { WhyBuiltSection } from "./ui/why-built-section";
 
+const AUTH_INPUT_CLASS =
+  "auth-input h-10 rounded-xl border px-3.5 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0";
+
 export default function LoginPage() {
   const reduceMotion = useReducedMotion();
   const [authOpen, setAuthOpen] = useState(false);
@@ -45,6 +49,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [name, setName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const dark = useIsDark();
   const { scrolled, scrollToId } = usePageScroll(reduceMotion, authOpen);
 
@@ -60,6 +66,8 @@ export default function LoginPage() {
     setPassword("");
     setConfirmPassword("");
     setName("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
   };
 
   const switchAuthMode = (mode: AuthMode) => {
@@ -370,7 +378,7 @@ export default function LoginPage() {
 
               {/* Right form */}
               <div className="flex h-full min-h-0 w-full shrink-0 justify-end p-5 sm:p-6 md:w-[30rem] lg:w-[32rem]">
-                <div className="relative flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-2xl bg-white text-zinc-900 shadow-[0_16px_48px_rgba(0,0,0,0.28)] ring-1 ring-black/5">
+                <div className="nocta-auth-form relative flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-2xl">
                   <button
                     type="button"
                     aria-label={loginContent.auth.close}
@@ -379,20 +387,20 @@ export default function LoginPage() {
                       resetAuthFields();
                       setAuthMode("login");
                     }}
-                    className="absolute top-4 right-4 z-20 inline-flex size-8 cursor-pointer items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+                    className="absolute top-4 right-4 z-20 inline-flex size-8 cursor-pointer items-center justify-center rounded-lg text-(--auth-soft) transition-colors hover:bg-(--auth-muted) hover:text-(--auth-ink)"
                   >
                     <XIcon className="size-4" />
                   </button>
 
                   <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pt-7 pr-12 sm:px-8 sm:pt-8 sm:pr-14">
-                    <p className="mb-4 shrink-0 font-serif text-base tracking-[-0.02em] text-zinc-900 md:hidden">
+                    <p className="mb-4 shrink-0 font-serif text-base tracking-[-0.02em] text-(--auth-ink) md:hidden">
                       {loginContent.brand}
                     </p>
 
                     <div
                       role="tablist"
                       aria-label="Account"
-                      className="grid shrink-0 grid-cols-2 rounded-xl bg-zinc-100 p-1"
+                      className="auth-tabs grid shrink-0 grid-cols-2 rounded-xl p-1"
                     >
                       <button
                         type="button"
@@ -401,8 +409,8 @@ export default function LoginPage() {
                         className={[
                           "h-9 cursor-pointer rounded-lg text-sm font-medium outline-none transition-colors duration-150",
                           authMode === "login"
-                            ? "bg-white text-zinc-900 shadow-sm"
-                            : "text-zinc-500 hover:text-zinc-800",
+                            ? "auth-tab-active"
+                            : "auth-tab-idle",
                         ].join(" ")}
                         onClick={() => switchAuthMode("login")}
                       >
@@ -415,8 +423,8 @@ export default function LoginPage() {
                         className={[
                           "h-9 cursor-pointer rounded-lg text-sm font-medium outline-none transition-colors duration-150",
                           authMode === "signup"
-                            ? "bg-white text-zinc-900 shadow-sm"
-                            : "text-zinc-500 hover:text-zinc-800",
+                            ? "auth-tab-active"
+                            : "auth-tab-idle",
                         ].join(" ")}
                         onClick={() => switchAuthMode("signup")}
                       >
@@ -441,12 +449,12 @@ export default function LoginPage() {
                             transition={{ duration: 0.2, ease: easeOut }}
                             className="absolute inset-x-0 top-0 flex flex-col gap-1.5"
                           >
-                            <DialogTitle className="font-serif text-xl font-normal tracking-[-0.04em] text-zinc-900 sm:text-2xl">
+                            <DialogTitle className="font-serif text-xl font-normal tracking-[-0.04em] text-(--auth-ink) sm:text-2xl">
                               {authMode === "login"
                                 ? loginContent.auth.login.title
                                 : loginContent.auth.signup.title}
                             </DialogTitle>
-                            <DialogDescription className="text-sm leading-5 text-zinc-500">
+                            <DialogDescription className="text-sm leading-5 text-(--auth-soft)">
                               {authMode === "login"
                                 ? loginContent.auth.login.body
                                 : loginContent.auth.signup.body}
@@ -464,35 +472,49 @@ export default function LoginPage() {
                       <button
                         type="button"
                         onClick={() => void loginWithGoogle()}
-                        className="inline-flex h-10 w-full shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white text-sm font-medium text-zinc-900 transition-colors hover:border-zinc-300 hover:bg-zinc-50 active:bg-zinc-100"
+                        className="auth-input inline-flex h-10 w-full shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl border text-sm font-medium transition-colors hover:bg-(--auth-muted)"
                       >
                         <GoogleMark />
                         {loginContent.auth.google}
                       </button>
 
                       <div className="my-4 flex shrink-0 items-center gap-3">
-                        <div className="h-px flex-1 bg-zinc-200" />
-                        <span className="text-xs text-zinc-500">
+                        <div className="h-px flex-1 bg-(--auth-line)" />
+                        <span className="text-xs text-(--auth-soft)">
                           {loginContent.auth.or}
                         </span>
-                        <div className="h-px flex-1 bg-zinc-200" />
+                        <div className="h-px flex-1 bg-(--auth-line)" />
                       </div>
 
                       <div className="flex flex-col gap-3.5">
                         <div
                           className={[
-                            "grid transition-[grid-template-rows,opacity] duration-200 ease-out",
+                            "grid transition-[grid-template-rows] duration-200 ease-out",
                             authMode === "signup"
-                              ? "grid-rows-[1fr] opacity-100"
-                              : "grid-rows-[0fr] opacity-0",
+                              ? "grid-rows-[1fr]"
+                              : "grid-rows-[0fr]",
                           ].join(" ")}
                           aria-hidden={authMode !== "signup"}
                         >
-                          <div className="min-h-0 overflow-hidden">
-                            <div className="flex flex-col gap-2 pb-3.5">
+                          <div
+                            className={[
+                              "min-h-0",
+                              authMode === "signup"
+                                ? "overflow-visible"
+                                : "overflow-hidden",
+                            ].join(" ")}
+                          >
+                            <div
+                              className={[
+                                "flex flex-col gap-2 pb-3.5 transition-opacity duration-200 ease-out",
+                                authMode === "signup"
+                                  ? "opacity-100"
+                                  : "opacity-0",
+                              ].join(" ")}
+                            >
                               <Label
                                 htmlFor="nocta-auth-name"
-                                className="text-sm font-medium text-zinc-800"
+                                className="text-sm font-medium text-(--auth-ink)"
                               >
                                 {loginContent.auth.signup.name}
                               </Label>
@@ -507,7 +529,7 @@ export default function LoginPage() {
                                 }
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                className="h-10 rounded-xl border-zinc-200 bg-white px-3.5 text-zinc-900 shadow-none placeholder:text-zinc-400 focus-visible:border-nocta-glow focus-visible:ring-nocta-glow/25 dark:border-zinc-200 dark:bg-white dark:text-zinc-900"
+                                className={AUTH_INPUT_CLASS}
                               />
                             </div>
                           </div>
@@ -516,7 +538,7 @@ export default function LoginPage() {
                         <div className="flex flex-col gap-2">
                           <Label
                             htmlFor="nocta-auth-email"
-                            className="text-sm font-medium text-zinc-800"
+                            className="text-sm font-medium text-(--auth-ink)"
                           >
                             {loginContent.auth.email}
                           </Label>
@@ -528,7 +550,7 @@ export default function LoginPage() {
                             placeholder={loginContent.auth.emailPlaceholder}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="h-10 rounded-xl border-zinc-200 bg-white px-3.5 text-zinc-900 shadow-none placeholder:text-zinc-400 focus-visible:border-nocta-glow focus-visible:ring-nocta-glow/25 dark:border-zinc-200 dark:bg-white dark:text-zinc-900"
+                            className={AUTH_INPUT_CLASS}
                           />
                         </div>
 
@@ -536,14 +558,14 @@ export default function LoginPage() {
                           <div className="flex h-5 items-center justify-between gap-3">
                             <Label
                               htmlFor="nocta-auth-password"
-                              className="text-sm font-medium text-zinc-800"
+                              className="text-sm font-medium text-(--auth-ink)"
                             >
                               {loginContent.auth.password}
                             </Label>
                             {authMode === "login" ? (
                               <button
                                 type="button"
-                                className="shrink-0 cursor-pointer text-xs text-zinc-500 transition-colors hover:text-zinc-800"
+                                className="auth-link shrink-0 cursor-pointer text-xs transition-opacity hover:opacity-80"
                               >
                                 {loginContent.auth.login.forgot}
                               </button>
@@ -553,44 +575,55 @@ export default function LoginPage() {
                               </span>
                             )}
                           </div>
-                          <Input
+                          <PasswordField
                             id="nocta-auth-password"
-                            type="password"
                             name="password"
                             autoComplete={
                               authMode === "login"
                                 ? "current-password"
                                 : "new-password"
                             }
-                            placeholder={
-                              loginContent.auth.passwordPlaceholder
-                            }
+                            placeholder={loginContent.auth.passwordPlaceholder}
                             value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="h-10 rounded-xl border-zinc-200 bg-white px-3.5 text-zinc-900 shadow-none placeholder:text-zinc-400 focus-visible:border-nocta-glow focus-visible:ring-nocta-glow/25 dark:border-zinc-200 dark:bg-white dark:text-zinc-900"
+                            onChange={setPassword}
+                            visible={showPassword}
+                            onVisibleChange={setShowPassword}
                           />
                         </div>
 
                         <div
                           className={[
-                            "grid transition-[grid-template-rows,opacity] duration-200 ease-out",
+                            "grid transition-[grid-template-rows] duration-200 ease-out",
                             authMode === "signup"
-                              ? "grid-rows-[1fr] opacity-100"
-                              : "grid-rows-[0fr] opacity-0",
+                              ? "grid-rows-[1fr]"
+                              : "grid-rows-[0fr]",
                           ].join(" ")}
                           aria-hidden={authMode !== "signup"}
                         >
-                          <div className="min-h-0 overflow-hidden">
-                            <div className="flex flex-col gap-2">
+                          <div
+                            className={[
+                              "min-h-0",
+                              authMode === "signup"
+                                ? "overflow-visible"
+                                : "overflow-hidden",
+                            ].join(" ")}
+                          >
+                            <div
+                              className={[
+                                "flex flex-col gap-2 pb-1 transition-opacity duration-200 ease-out",
+                                authMode === "signup"
+                                  ? "opacity-100"
+                                  : "opacity-0",
+                              ].join(" ")}
+                            >
                               <Label
                                 htmlFor="nocta-auth-confirm"
-                                className="text-sm font-medium text-zinc-800"
+                                className="text-sm font-medium text-(--auth-ink)"
                               >
                                 {loginContent.auth.signup.confirmPassword}
                               </Label>
-                              <Input
+                              <PasswordField
                                 id="nocta-auth-confirm"
-                                type="password"
                                 name="confirmPassword"
                                 autoComplete="new-password"
                                 tabIndex={authMode === "signup" ? 0 : -1}
@@ -598,10 +631,9 @@ export default function LoginPage() {
                                   loginContent.auth.signup.confirmPlaceholder
                                 }
                                 value={confirmPassword}
-                                onChange={(e) =>
-                                  setConfirmPassword(e.target.value)
-                                }
-                                className="h-10 rounded-xl border-zinc-200 bg-white px-3.5 text-zinc-900 shadow-none placeholder:text-zinc-400 focus-visible:border-nocta-glow focus-visible:ring-nocta-glow/25 dark:border-zinc-200 dark:bg-white dark:text-zinc-900"
+                                onChange={setConfirmPassword}
+                                visible={showConfirmPassword}
+                                onVisibleChange={setShowConfirmPassword}
                               />
                             </div>
                           </div>
@@ -611,23 +643,23 @@ export default function LoginPage() {
                   </div>
 
                   {/* Sticky footer */}
-                  <div className="shrink-0 border-t border-zinc-100 bg-white px-6 pt-4 pb-6 sm:px-8 sm:pt-5 sm:pb-7">
+                  <div className="auth-footer shrink-0 border-t px-6 pt-4 pb-6 sm:px-8 sm:pt-5 sm:pb-7">
                     <button
                       type="submit"
                       form="nocta-auth-form"
-                      className="inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-xl bg-nocta-glow text-sm font-semibold text-white transition-colors hover:brightness-95 active:brightness-90"
+                      className="auth-cta inline-flex h-11 w-full cursor-pointer items-center justify-center rounded-xl text-sm font-semibold transition-colors"
                     >
                       {authMode === "login"
                         ? loginContent.auth.login.cta
                         : loginContent.auth.signup.cta}
                     </button>
-                    <p className="mt-4 text-center text-sm text-zinc-500">
+                    <p className="mt-4 text-center text-sm text-(--auth-soft)">
                       {authMode === "login"
                         ? loginContent.auth.login.switchPrompt
                         : loginContent.auth.signup.switchPrompt}{" "}
                       <button
                         type="button"
-                        className="cursor-pointer font-medium text-nocta-glow transition-colors hover:brightness-90"
+                        className="auth-link cursor-pointer font-medium transition-opacity hover:opacity-80"
                         onClick={() =>
                           switchAuthMode(
                             authMode === "login" ? "signup" : "login",

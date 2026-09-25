@@ -82,6 +82,8 @@ export const loginContent = {
     emailPlaceholder: "you@example.com",
     password: "Password",
     passwordPlaceholder: "Your password",
+    showPassword: "Show password",
+    hidePassword: "Hide password",
     // Auth later
     close: "Close",
     login: {

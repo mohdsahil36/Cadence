@@ -119,108 +119,96 @@ export function ScoringVisual({ className, wide }: VisualProps) {
   );
 }
 
-/** Rotating action cards */
+/** Tonight’s pick — one lit row among quiet options (no stacked cards) */
 export function OneActionVisual({ className, wide }: VisualProps) {
   const reduce = useReducedMotion();
-  const cards = [
-    {
-      title: "Ship the scoring PR",
-      meta: "Score 36 · Due tonight",
-      detail: "Highest leverage before sleep.",
-    },
-    {
-      title: "Write weekly note",
-      meta: "Score 24 · Soft due",
-      detail: "Patterns only — no dashboard.",
-    },
-    {
-      title: "Recovery night",
-      meta: "Protected · no penalty",
-      detail: "Rest is a valid priority.",
-    },
-  ];
-  const [index, setIndex] = useState(0);
+  const options = [
+    { title: "Ship the scoring PR", meta: "Score 36 · Due tonight" },
+    { title: "Write weekly note", meta: "Score 24 · Soft due" },
+    { title: "Recovery night", meta: "Protected · no penalty" },
+  ] as const;
+  const [picked, setPicked] = useState(0);
 
   useEffect(() => {
     if (reduce) return;
     const id = window.setInterval(() => {
-      setIndex((v) => (v + 1) % cards.length);
-    }, 3200);
+      setPicked((v) => (v + 1) % options.length);
+    }, 2800);
     return () => window.clearInterval(id);
-  }, [reduce, cards.length]);
+  }, [reduce, options.length]);
 
   return (
     <div
       className={cn(
-        "relative flex h-full items-center justify-center",
+        "flex h-full flex-col justify-center gap-3",
         wide ? "min-h-48" : "min-h-36",
         className,
       )}
     >
-      <div
-        className={cn(
-          "relative w-full",
-          wide ? "h-44 max-w-none" : "h-32 max-w-56",
-        )}
-      >
-        {cards.map((card, i) => {
-          const offset = (i - index + cards.length) % cards.length;
-          const isFront = offset === 0;
-          const isVisible = offset <= 2;
+      <div className="flex items-baseline justify-between gap-2">
+        <p className={labelClass}>Tonight’s pick</p>
+        {wide ? (
+          <p className="text-[10px] text-muted-foreground">One action</p>
+        ) : null}
+      </div>
+
+      <div className="flex flex-col gap-1.5" role="list">
+        {options.map((opt, i) => {
+          const active = i === picked;
           return (
             <motion.div
-              key={card.title}
-              aria-hidden={!isFront}
-              className={cn(
-                "absolute inset-x-0 top-0 overflow-hidden rounded-3xl border p-4 sm:p-5",
-                isFront
-                  ? "border-nocta-glow/25 bg-nocta-paper text-nocta-ink shadow-[0_16px_40px_color-mix(in_oklab,var(--nocta-ink)_18%,transparent)] dark:border-nocta-glow/30 dark:bg-white/[0.07] dark:text-nocta-ink dark:shadow-[0_16px_40px_rgb(0_0_0_/_0.45)]"
-                  : "border-nocta-ink/10 bg-nocta-ink/[0.04] dark:border-white/8 dark:bg-white/[0.04]",
-              )}
+              key={opt.title}
+              role="listitem"
+              aria-current={active ? "true" : undefined}
+              layout={!reduce}
               initial={false}
               animate={{
-                y: offset * (wide ? 16 : 12),
-                x: offset * (wide ? 10 : 6),
-                scale: 1 - offset * 0.06,
-                rotate: offset * 1.4,
-                zIndex: cards.length - offset,
-                opacity: isVisible ? (isFront ? 1 : 0.72 - offset * 0.14) : 0,
+                opacity: active ? 1 : 0.4,
+                scale: active ? 1 : 0.985,
               }}
               transition={
                 reduce
                   ? { duration: 0 }
-                  : { type: "spring", stiffness: 220, damping: 24, mass: 0.9 }
+                  : { type: "spring", stiffness: 280, damping: 28 }
               }
+              className={cn(
+                "flex items-center gap-3 rounded-2xl border px-3 py-2.5 sm:px-3.5",
+                active
+                  ? "border-nocta-glow/30 bg-nocta-glow/12 shadow-[0_8px_24px_color-mix(in_oklab,var(--nocta-glow)_12%,transparent)]"
+                  : "border-nocta-ink/6 bg-nocta-ink/[0.03] dark:border-white/6 dark:bg-white/[0.03]",
+              )}
             >
-              {/* Always show text so the stack reads as real cards */}
-              <p
+              <span
+                aria-hidden
                 className={cn(
-                  "font-serif tracking-[-0.02em] text-nocta-ink",
-                  wide ? "text-sm sm:text-base" : "text-xs",
-                  !isFront && "opacity-80",
+                  "size-1.5 shrink-0 rounded-full transition-colors duration-300",
+                  active ? "bg-nocta-glow" : "bg-nocta-ink/20 dark:bg-white/20",
                 )}
-              >
-                {card.title}
-              </p>
-              <p className="mt-1 text-[10px] text-muted-foreground sm:text-[11px]">
-                {card.meta}
-              </p>
-              {wide ? (
-                <p className="mt-2 text-xs text-muted-foreground/80">
-                  {card.detail}
+              />
+              <div className="min-w-0 flex-1">
+                <p
+                  className={cn(
+                    "truncate font-serif tracking-[-0.02em] text-nocta-ink",
+                    wide ? "text-sm" : "text-xs",
+                  )}
+                >
+                  {opt.title}
                 </p>
-              ) : null}
-              <motion.span
-                className="mt-3 inline-flex rounded-full bg-nocta-glow px-3 py-1.5 text-[10px] font-medium text-nocta-ink sm:text-[11px]"
-                initial={false}
-                animate={{
-                  opacity: isFront ? 1 : 0,
-                  y: isFront ? 0 : 6,
-                }}
-                transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-              >
-                Choose tonight
-              </motion.span>
+                <p className="truncate text-[10px] text-muted-foreground sm:text-[11px]">
+                  {opt.meta}
+                </p>
+              </div>
+              <div className="flex h-6 w-16 shrink-0 items-center justify-end">
+                {active ? (
+                  <motion.span
+                    initial={reduce ? false : { opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="rounded-full bg-nocta-glow px-2.5 py-1 text-[10px] font-medium text-nocta-night"
+                  >
+                    Tonight
+                  </motion.span>
+                ) : null}
+              </div>
             </motion.div>
           );
         })}
