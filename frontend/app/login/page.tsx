@@ -124,7 +124,7 @@ function useIsDark() {
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", dark);
-    const color = dark ? "#14131a" : "#f3eee6";
+    const color = dark ? "#0e1219" : "#e8eef5";
     document.documentElement.style.backgroundColor = color;
     document.body.style.backgroundColor = color;
     return () => {
@@ -203,7 +203,7 @@ export default function LoginPage() {
   const openAuth = () => setAuthOpen(true);
 
   return (
-    <div className="relative isolate min-h-svh w-full bg-[#f3eee6] text-foreground dark:bg-[#14131a]">
+    <div className="relative isolate min-h-svh w-full bg-nocta-paper text-foreground dark:bg-nocta-paper">
       <header className="fixed inset-x-0 top-0 z-40 flex justify-center px-3 pt-3 sm:px-5 sm:pt-4">
         <motion.div
           className="flex w-full justify-center"
@@ -295,10 +295,10 @@ export default function LoginPage() {
       <main className="relative z-10 w-full">
         <section
           id="top"
-          className="relative flex min-h-svh w-full items-center justify-center overflow-hidden bg-[#14131a]"
+          className="relative flex min-h-svh w-full items-center justify-center overflow-hidden bg-nocta-night"
         >
           {/* Solid base so the scenery fade never exposes the page/body white. */}
-          <div aria-hidden className="absolute inset-0 bg-[#14131a]" />
+          <div aria-hidden className="absolute inset-0 bg-nocta-night" />
           <motion.div
             className="absolute inset-0"
             variants={sceneryReveal}
@@ -307,10 +307,10 @@ export default function LoginPage() {
           >
             <PixelScenery className="inset-0" />
           </motion.div>
-          {/* Extra seam blend into the cream / charcoal page below */}
+          {/* Extra seam blend into the page below */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-32 bg-linear-to-t from-[#f3eee6] to-transparent dark:from-[#14131a]"
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-32 bg-linear-to-t from-nocta-paper to-transparent"
           />
 
           <motion.div
@@ -382,7 +382,7 @@ export default function LoginPage() {
 
         <motion.section
           id="how-it-works"
-          className="relative z-10 bg-[#f3eee6] py-16 sm:py-24 dark:bg-[#14131a]"
+          className="relative z-10 bg-nocta-paper py-16 sm:py-24"
           variants={sectionReveal}
           initial={reduceMotion ? false : "hidden"}
           whileInView="show"
@@ -418,7 +418,7 @@ export default function LoginPage() {
 
         <motion.section
           id="close"
-          className="relative z-10 bg-[#f3eee6] py-20 sm:py-28 dark:bg-[#14131a]"
+          className="relative z-10 bg-nocta-paper py-20 sm:py-28"
           variants={sectionReveal}
           initial={reduceMotion ? false : "hidden"}
           whileInView="show"
@@ -501,7 +501,7 @@ function WhyBuiltSection() {
     <section
       id="why"
       ref={ref}
-      className="relative z-10 bg-[#f3eee6] px-4 py-16 sm:px-6 sm:py-20 dark:bg-[#14131a]"
+      className="relative z-10 bg-nocta-paper px-4 py-16 sm:px-6 sm:py-20"
     >
       <div className="mx-auto w-full max-w-2xl text-center">
         <p className="mb-5 text-xs font-medium tracking-[0.16em] text-muted-foreground uppercase">
@@ -608,13 +608,13 @@ function FeatureCell({
   return (
     <motion.div className={span} variants={fadeUp} custom={index}>
       <Card
-        className={`nocta-bento-card group flex h-full min-h-64 cursor-default flex-col gap-0 overflow-hidden rounded-3xl border-0 py-0 ring-0 transition-shadow duration-150 ease-out sm:min-h-72`}
+        className="nocta-bento-card group flex h-full min-h-64 cursor-default flex-col gap-0 overflow-hidden rounded-[1.75rem] border-0 py-0 ring-0 transition-shadow duration-150 ease-out sm:min-h-72"
       >
         {isWide ? (
           <div className="flex h-full min-h-72 flex-col gap-4 p-6 sm:flex-row sm:items-stretch sm:gap-6 sm:p-8">
-            <div className="flex w-full shrink-0 flex-col justify-center gap-2.5 sm:w-[34%] sm:max-w-xs">
+            <div className="flex w-full shrink-0 flex-col justify-center gap-3 sm:w-[34%] sm:max-w-xs">
               <h3
-                className={`text-xl font-semibold tracking-tight sm:text-2xl ${theme.title}`}
+                className={`text-xl leading-snug sm:text-2xl ${theme.title}`}
               >
                 {feature.title}
               </h3>
@@ -628,12 +628,10 @@ function FeatureCell({
           </div>
         ) : (
           <div className="flex h-full flex-col p-6 sm:p-7">
-            <div className="mb-4 min-h-32 flex-1 sm:min-h-36">
+            <div className="mb-5 min-h-32 flex-1 sm:min-h-36">
               <BentoVisual id={feature.id} />
             </div>
-            <h3
-              className={`text-lg font-semibold tracking-tight sm:text-xl ${theme.title}`}
-            >
+            <h3 className={`text-lg leading-snug sm:text-xl ${theme.title}`}>
               {feature.title}
             </h3>
             <p className={`mt-2 text-sm leading-6 ${theme.muted}`}>

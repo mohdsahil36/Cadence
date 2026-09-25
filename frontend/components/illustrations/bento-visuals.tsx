@@ -1,13 +1,23 @@
 "use client";
 
 /**
- * Dusk-glass bento visuals — tones match the hero scenery, not neon cards.
- * Motion language inspired by https://ui.aceternity.com/blocks/illustrations
+ * Bento visuals — Nocta ink + glow (tonight's priority), cool moonlight palette.
  */
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { cn } from "cn";
+
+/** Quiet → tonight intensity. Ember only on the highest rung. */
+const SIGNAL_TONE = [
+  "bg-nocta-ink/12 dark:bg-nocta-ink/15",
+  "bg-nocta-ink/28 dark:bg-nocta-ink/30",
+  "bg-nocta-ink/50 dark:bg-nocta-ink/55",
+  "bg-nocta-glow",
+] as const;
+
+const labelClass =
+  "text-[10px] font-medium tracking-[0.14em] text-muted-foreground uppercase";
 
 /**
  * Outer bento shell class lives in globals.css (`.nocta-bento-card`) so the
@@ -18,27 +28,27 @@ const bentoCard = "nocta-bento-card";
 export const BENTO_THEME = {
   scoring: {
     card: bentoCard,
-    title: "text-foreground",
+    title: "font-serif font-normal tracking-[-0.03em] text-foreground",
     muted: "text-muted-foreground",
   },
   "one-action": {
     card: bentoCard,
-    title: "text-foreground",
+    title: "font-serif font-normal tracking-[-0.03em] text-foreground",
     muted: "text-muted-foreground",
   },
   reflection: {
     card: bentoCard,
-    title: "text-foreground",
+    title: "font-serif font-normal tracking-[-0.03em] text-foreground",
     muted: "text-muted-foreground",
   },
   recovery: {
     card: bentoCard,
-    title: "text-foreground",
+    title: "font-serif font-normal tracking-[-0.03em] text-foreground",
     muted: "text-muted-foreground",
   },
   neglected: {
     card: bentoCard,
-    title: "text-foreground",
+    title: "font-serif font-normal tracking-[-0.03em] text-foreground",
     muted: "text-muted-foreground",
   },
 } as const;
@@ -57,12 +67,7 @@ export function ScoringVisual({ className, wide }: VisualProps) {
     const level = n < 0.35 ? 0 : n < 0.55 ? 1 : n < 0.75 ? 2 : 3;
     return { level, h: 28 + level * 18 + (i % 3) * 4 };
   });
-  const tone = [
-    "bg-stone-300/45 dark:bg-stone-500/30",
-    "bg-stone-400/60 dark:bg-stone-400/40",
-    "bg-amber-400/70 dark:bg-amber-400/45",
-    "bg-amber-500/85 dark:bg-amber-300/55",
-  ];
+  const tone = SIGNAL_TONE;
   const labels = ["Quiet", "Watch", "Due", "Now"];
 
   return (
@@ -70,7 +75,7 @@ export function ScoringVisual({ className, wide }: VisualProps) {
       className={cn("flex h-full flex-col justify-end gap-2", className)}
       onMouseLeave={() => setHover(null)}
     >
-      <div className="relative min-h-5 text-center text-[10px] text-muted-foreground">
+      <div className={cn("relative min-h-5 text-center", labelClass)}>
         <AnimatePresence mode="wait">
           {hover !== null ? (
             <motion.span
@@ -79,7 +84,7 @@ export function ScoringVisual({ className, wide }: VisualProps) {
               animate={{ opacity: 1, filter: "blur(0px)" }}
               exit={{ opacity: 0, filter: "blur(4px)" }}
               transition={{ duration: 0.2 }}
-              className="inline-block"
+              className="inline-block normal-case tracking-normal text-nocta-glow"
             >
               Night {hover + 1} · {labels[bars[hover]?.level ?? 0]} ·{" "}
               {72 + (bars[hover]?.level ?? 0) * 8}%
@@ -89,19 +94,19 @@ export function ScoringVisual({ className, wide }: VisualProps) {
           )}
         </AnimatePresence>
       </div>
-      <div className="flex flex-1 items-end gap-0.5">
+      <div className="flex flex-1 items-end gap-px sm:gap-0.5">
         {bars.map((bar, i) => (
           <motion.button
             key={i}
             type="button"
             aria-label={`Night ${i + 1}`}
             className={cn(
-              "min-w-0 flex-1 origin-bottom cursor-pointer rounded-sm",
+              "min-w-0 flex-1 origin-bottom cursor-pointer rounded-t-sm rounded-b-[1px]",
               tone[bar.level],
             )}
             style={{ height: `${bar.h}%` }}
             initial={reduce ? false : { scaleY: 0.25 }}
-            animate={{ scaleY: hover === i ? 1.1 : 1 }}
+            animate={{ scaleY: hover === i ? 1.08 : 1 }}
             transition={{
               type: "spring",
               stiffness: 320,
@@ -170,11 +175,10 @@ export function OneActionVisual({ className, wide }: VisualProps) {
               key={card.title}
               aria-hidden={!isFront}
               className={cn(
-                "absolute inset-x-0 top-0 overflow-hidden rounded-2xl border p-4 shadow-lg sm:p-5",
-                // Opaque shells so stacked cards don't ghost through in dark mode
+                "absolute inset-x-0 top-0 overflow-hidden rounded-3xl border p-4 sm:p-5",
                 isFront
-                  ? "border-border/40 bg-card text-card-foreground dark:border-white/12 dark:bg-zinc-900"
-                  : "border-border/25 bg-muted dark:border-white/8 dark:bg-zinc-800",
+                  ? "border-nocta-glow/25 bg-nocta-paper text-nocta-ink shadow-[0_16px_40px_color-mix(in_oklab,var(--nocta-ink)_18%,transparent)] dark:border-nocta-glow/30 dark:bg-white/[0.07] dark:text-nocta-ink dark:shadow-[0_16px_40px_rgb(0_0_0_/_0.45)]"
+                  : "border-nocta-ink/10 bg-nocta-ink/[0.04] dark:border-white/8 dark:bg-white/[0.04]",
               )}
               initial={false}
               animate={{
@@ -194,7 +198,7 @@ export function OneActionVisual({ className, wide }: VisualProps) {
               {/* Keep copy on every plate so a cycle reads as a deck shuffle, not a text flash */}
               <p
                 className={cn(
-                  "font-semibold text-foreground",
+                  "font-serif tracking-[-0.02em] text-nocta-ink",
                   wide ? "text-sm sm:text-base" : "text-xs",
                   !isFront && "opacity-80",
                 )}
@@ -210,7 +214,7 @@ export function OneActionVisual({ className, wide }: VisualProps) {
                 </p>
               ) : null}
               <motion.span
-                className="mt-3 inline-flex rounded-full bg-foreground px-3 py-1.5 text-[10px] font-medium text-background sm:text-[11px]"
+                className="mt-3 inline-flex rounded-full bg-nocta-glow px-3 py-1.5 text-[10px] font-medium text-nocta-ink sm:text-[11px]"
                 initial={false}
                 animate={{
                   opacity: isFront ? 1 : 0,
@@ -239,19 +243,14 @@ export function ReflectionVisual({ className }: VisualProps) {
       cells.push(n < 0.25 ? 0 : n < 0.45 ? 1 : n < 0.7 ? 2 : 3);
     }
   }
-  const tone = [
-    "bg-stone-200/40 dark:bg-stone-700/40",
-    "bg-stone-300/55 dark:bg-stone-500/40",
-    "bg-amber-300/65 dark:bg-amber-500/40",
-    "bg-amber-400/85 dark:bg-amber-300/55",
-  ];
+  const tone = SIGNAL_TONE;
 
   return (
     <div className={cn("flex h-full flex-col justify-end gap-2", className)}>
       <div className="flex items-end justify-between gap-2">
-        <p className="text-[10px] text-muted-foreground">Weekly pulse</p>
+        <p className={labelClass}>Weekly pulse</p>
         <motion.p
-          className="font-serif text-lg text-foreground"
+          className="font-serif text-lg tracking-[-0.03em] text-nocta-glow"
           animate={reduce ? undefined : { opacity: [0.7, 1, 0.7] }}
           transition={{ duration: 3, repeat: Infinity }}
         >
@@ -262,8 +261,8 @@ export function ReflectionVisual({ className }: VisualProps) {
         {cells.map((level, i) => (
           <motion.div
             key={i}
-            className={cn("size-2.5 rounded-[3px] sm:size-3", tone[level])}
-            animate={reduce ? undefined : { opacity: [0.5, 1, 0.5] }}
+            className={cn("size-2.5 rounded-[2px] sm:size-3", tone[level])}
+            animate={reduce ? undefined : { opacity: [0.55, 1, 0.55] }}
             transition={{
               duration: 2.4 + (i % 5) * 0.1,
               repeat: Infinity,
@@ -305,7 +304,7 @@ export function RecoveryVisual({ className }: VisualProps) {
     >
       <motion.div
         layout
-        className="flex items-center justify-center overflow-hidden rounded-full bg-foreground text-background shadow-lg"
+        className="flex items-center justify-center overflow-hidden rounded-full bg-nocta-ink text-nocta-paper shadow-[0_10px_28px_color-mix(in_oklab,var(--nocta-ink)_25%,transparent)] dark:bg-nocta-paper dark:text-nocta-ink"
         animate={{
           width: state.wide ? 210 : 84,
           height: state.wide ? 52 : 34,
@@ -320,9 +319,11 @@ export function RecoveryVisual({ className }: VisualProps) {
             exit={{ opacity: 0, y: -6 }}
             className="px-4 text-center"
           >
-            <p className="text-xs font-semibold leading-tight">{state.label}</p>
+            <p className="font-serif text-xs leading-tight tracking-[-0.02em]">
+              {state.label}
+            </p>
             {state.wide ? (
-              <p className="mt-0.5 text-[10px] text-background/70">{state.sub}</p>
+              <p className="mt-0.5 text-[10px] opacity-70">{state.sub}</p>
             ) : null}
           </motion.div>
         </AnimatePresence>
@@ -332,10 +333,10 @@ export function RecoveryVisual({ className }: VisualProps) {
           <span
             key={t}
             className={cn(
-              "rounded-full px-2.5 py-1 text-[10px] ring-1 ring-foreground/10",
+              "rounded-full px-2.5 py-1 text-[10px] tracking-wide ring-1",
               idx === i
-                ? "bg-foreground/10 font-medium text-foreground"
-                : "text-muted-foreground",
+                ? "bg-nocta-glow/15 font-medium text-nocta-glow ring-nocta-glow/30"
+                : "text-muted-foreground ring-nocta-ink/10 dark:ring-white/10",
             )}
           >
             {t}
@@ -369,9 +370,7 @@ export function NeglectedVisual({ className }: VisualProps) {
 
   return (
     <div className={cn("flex h-full flex-col justify-end gap-2", className)}>
-      <p className="text-[10px] text-muted-foreground">
-        Days since last attention
-      </p>
+      <p className={labelClass}>Days since last attention</p>
       <div className="flex flex-col gap-1.5">
         {areas.map((area, i) => {
           const active = area.hot && pulse % areas.length === i;
@@ -379,10 +378,10 @@ export function NeglectedVisual({ className }: VisualProps) {
             <motion.div
               key={area.name}
               className={cn(
-                "flex items-center gap-2 rounded-xl px-2.5 py-1.5 ring-1",
+                "flex items-center gap-2 rounded-2xl px-2.5 py-1.5 ring-1",
                 area.hot
-                  ? "bg-amber-400/15 ring-amber-400/25 dark:bg-amber-300/10 dark:ring-amber-200/20"
-                  : "bg-foreground/5 ring-foreground/8",
+                  ? "bg-nocta-glow/10 ring-nocta-glow/25"
+                  : "bg-nocta-ink/[0.04] ring-nocta-ink/8 dark:bg-white/[0.03] dark:ring-white/8",
               )}
               animate={
                 reduce
@@ -402,20 +401,20 @@ export function NeglectedVisual({ className }: VisualProps) {
               <span
                 className={cn(
                   "size-1.5 shrink-0 rounded-full",
-                  area.hot ? "bg-amber-400" : "bg-muted-foreground/40",
+                  area.hot ? "bg-nocta-glow" : "bg-muted-foreground/40",
                 )}
               />
-              <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-foreground">
+              <span className="min-w-0 flex-1 truncate font-serif text-[12px] tracking-[-0.02em] text-foreground">
                 {area.name}
               </span>
               <span className="tabular-nums text-[10px] text-muted-foreground">
                 {area.days}d
               </span>
-              <div className="h-1 w-12 overflow-hidden rounded-full bg-foreground/10 sm:w-16">
+              <div className="h-1 w-12 overflow-hidden rounded-full bg-nocta-ink/10 sm:w-16 dark:bg-white/10">
                 <motion.div
                   className={cn(
                     "h-full rounded-full",
-                    area.hot ? "bg-amber-400/80" : "bg-stone-400/50",
+                    area.hot ? "bg-nocta-glow" : "bg-nocta-ink/35 dark:bg-nocta-ink/40",
                   )}
                   initial={false}
                   animate={{ width: `${Math.min(100, area.days * 9)}%` }}
